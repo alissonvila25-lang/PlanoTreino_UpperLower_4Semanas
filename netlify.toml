@@ -1,0 +1,13 @@
+[build]
+  publish = "app"
+
+# SPA fallback to index.html (keeps asset requests working)
+[[redirects]]
+  from = "/app/*"
+  to = "/app/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

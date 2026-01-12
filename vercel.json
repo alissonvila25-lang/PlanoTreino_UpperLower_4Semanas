@@ -1,0 +1,7 @@
+{
+  "framework": "static",
+  "outputDirectory": "app",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
