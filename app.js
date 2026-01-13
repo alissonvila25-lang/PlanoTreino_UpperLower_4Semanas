@@ -1,5 +1,5 @@
 // Register SW + atualização automática com aviso
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v30';
 try {
   const verElInit = document.getElementById('version-label');
   if (verElInit) {
@@ -44,7 +44,7 @@ function showUpdateBanner(message, actionLabel, onClick) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register(`./sw.v32.js`);
+      const reg = await navigator.serviceWorker.register(`./sw.v30.js`);
 
       // Recarrega automaticamente quando o novo SW assumir controle
       let refreshing = false;
