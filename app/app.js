@@ -1,7 +1,84 @@
-// Register SW
+// Register SW + atualização automática com aviso
+function showUpdateBanner(message, actionLabel, onClick) {
+  try {
+    const bar = document.createElement('div');
+    bar.style.position = 'fixed';
+    bar.style.left = '50%';
+    bar.style.bottom = '16px';
+    bar.style.transform = 'translateX(-50%)';
+    bar.style.zIndex = '1000';
+    bar.style.display = 'flex';
+    bar.style.gap = '8px';
+    bar.style.alignItems = 'center';
+    bar.style.border = '1px solid var(--border)';
+    bar.style.background = 'var(--card)';
+    bar.style.color = 'var(--text)';
+    bar.style.padding = '10px 12px';
+    bar.style.borderRadius = '10px';
+    bar.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+    const span = document.createElement('span');
+    span.textContent = message;
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = actionLabel || 'Atualizar';
+    btn.addEventListener('click', () => { try { onClick && onClick(); } finally { bar.remove(); } });
+    const close = document.createElement('button');
+    close.className = 'btn btn-danger';
+    close.textContent = 'Fechar';
+    close.addEventListener('click', () => bar.remove());
+    bar.appendChild(span);
+    bar.appendChild(btn);
+    bar.appendChild(close);
+    document.body.appendChild(bar);
+  } catch (e) { console.error(e); }
+}
+
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+
+      // Recarrega automaticamente quando o novo SW assumir controle
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        // Opcional: mostrar feedback rápido
+        try { showUpdateBanner('Atualizando...', 'Ok', () => {}); } catch {}
+        window.location.reload();
+      });
+
+      // Se já houver um SW em espera (caso skipWaiting não tenha sido aplicado)
+      if (reg.waiting) {
+        showUpdateBanner('Atualização disponível', 'Atualizar', () => {
+          try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch {}
+        });
+      }
+
+      // Detecta novas versões
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            // Nova versão pronta
+            showUpdateBanner('Atualização disponível', 'Atualizar', () => {
+              try { (reg.waiting || nw).postMessage({ type: 'SKIP_WAITING' }); } catch {}
+            });
+          }
+        });
+      });
+
+      // Mensagens do SW (opcional)
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event?.data?.type === 'SW_ACTIVATED') {
+          // Podemos informar versão, se desejado
+          // console.log('Service Worker ativado:', event.data.version);
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
   });
 }
 

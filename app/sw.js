@@ -21,6 +21,21 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
   );
   self.clients.claim();
+  // Notifica clientes que o SW foi ativado (informativo)
+  event.waitUntil((async () => {
+    try {
+      const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of all) {
+        client.postMessage({ type: 'SW_ACTIVATED', version: CACHE_NAME });
+      }
+    } catch (e) {}
+  })());
+});
+self.addEventListener('message', (event) => {
+  if (event && event.data && event.data.type === 'SKIP_WAITING') {
+    // Permite que a página force a ativação do novo SW
+    self.skipWaiting();
+  }
 });
 self.addEventListener('fetch', (event) => {
   const req = event.request;
