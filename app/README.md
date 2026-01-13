@@ -48,3 +48,31 @@ npx serve app -p 5173
 - Marcar exercício concluído e ver o Resumo por dia.
 - Glossário de técnicas carregado de tecnicas.csv.
 - Exportação do progresso em CSV e limpeza total do progresso.
+
+## Imagens dos exercícios (licenças livres)
+- As imagens locais ficam em `app/images/` e são usadas por nome com `slug` (ex.: `supino-reto-smith.webp/png/jpg`).
+- Para exercícios sem imagem, há um script que tenta baixar fotos do Wikimedia Commons com licença livre e grava os créditos em `app/image_credits.json`.
+ - Alternativa: script usando Openverse (catálogo CC) para buscar imagens livres quando não houver resultado no Commons.
+
+Como usar (Windows):
+
+```powershell
+# Instalar dependências do script
+pip install requests
+
+# Rodar o coletor (na raiz do projeto)
+python app/scripts/fetch_commons_images.py
+
+# Fallback/alternativa via Openverse
+python app/scripts/fetch_openverse_images.py
+```
+
+O script:
+- Lê `plano-4-semanas.csv` para obter os nomes dos exercícios, gera os `slugs` equivalentes e verifica quais não têm imagem local.
+- Busca no Wikimedia Commons (termo: "<exercício> exercício academia"), baixa a miniatura de até ~1200px e salva em `app/images/<slug>.jpg|.png`.
+- Atualiza `app/image_credits.json` com título, autor e licença.
+
+Observações:
+- As imagens baixadas são de licença livre (Commons). Evitamos conteúdo com direitos autorais restritos (Google Images tradicional, etc.).
+- Após baixar novas imagens, o Service Worker fará cache quando forem carregadas; não é necessário precache manual.
+ - Os créditos e licenças ficam registrados em `app/image_credits.json`.

@@ -1,5 +1,5 @@
 // Register SW + atualização automática com aviso
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 try {
   const verElInit = document.getElementById('version-label');
   if (verElInit) {
@@ -954,7 +954,7 @@ els.exportBtn.addEventListener('click', () => {
     }
   }
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        // Attempt remote image (Wikimedia Commons, then Openverse) after local fallbacks
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'progresso-plano-4-semanas.csv'; a.click();
@@ -972,19 +972,45 @@ if (els.exportWeekFilter) {
 if (els.exportDayFilter) {
   const savedD = localStorage.getItem('plano4s:exportDay') || '';
   els.exportDayFilter.value = savedD;
-  els.exportDayFilter.addEventListener('change', () => {
-    localStorage.setItem('plano4s:exportDay', els.exportDayFilter.value);
-  });
-}
-
-els.clearBtn.addEventListener('click', () => {
-  if (!confirm('Tem certeza que deseja limpar todo o progresso salvo localmente?')) return;
-  Object.keys(localStorage).filter(k => k.startsWith('plano4s:')).forEach(k => localStorage.removeItem(k));
-  render();
-});
+          if (!hits.length) { attemptOpenverse(); return; }
+          const title = hits[0].title;
+          const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&iiurlwidth=1200&format=json&origin=*`;
+          return fetch(infoUrl).then(r=>r.json()).then((d2)=>{
+            const pages = d2 && d2.query && d2.query.pages ? d2.query.pages : {};
+            let set = false;
+            for (const k in pages){
+              const ii = pages[k].imageinfo;
+              if (ii && ii.length){
+                const url = ii[0].thumburl || ii[0].url;
+                if (url){ imgEl.src = url; set = true; break; }
+              }
+            }
+            if (!set) attemptOpenverse();
+          });
 
 // Export JSON
 if (els.exportJsonBtn) {
+
+    function attemptOpenverse(){
+      try {
+        const q = exName + ' exercício academia';
+        const api = `https://api.openverse.engineering/v1/images/?q=${encodeURIComponent(q)}&license=cc0,cc-by,cc-by-sa&page_size=5`;
+        fetch(api).then(r=>r.json()).then((data)=>{
+          const results = (data && data.results) ? data.results : [];
+          if (!results.length) return;
+          // prefer safe sources
+          const preferred = ['flickr','wikimedia','smugmug'];
+          results.sort((a,b)=>{
+            const sa = preferred.includes(String(a.source||'').toLowerCase()) ? 0 : 1;
+            const sb = preferred.includes(String(b.source||'').toLowerCase()) ? 0 : 1;
+            return sa - sb;
+          });
+          const item = results[0];
+          const url = item.thumbnail || item.url;
+          if (url) imgEl.src = url;
+        }).catch(()=>{});
+      } catch {}
+    }
   els.exportJsonBtn.addEventListener('click', () => {
     const data = {};
     Object.keys(localStorage).forEach(k => {
