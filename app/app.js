@@ -1,5 +1,5 @@
 // Register SW + atualização automática com aviso
-const APP_VERSION = 'v31';
+const APP_VERSION = 'v32';
 try {
   const verElInit = document.getElementById('version-label');
   if (verElInit) {
@@ -287,25 +287,52 @@ function setExerciseImage(imgEl, exName){
   // start trying
   tryNext();
 
+  // Remote fallback: Wikimedia Commons first, then Openverse (licenças livres)
   function attemptRemote(){
-    const term = exName + ' exercicio academia';
+    const term = exName + ' exercício academia';
     const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srnamespace=6&format=json&origin=*`;
-    // Run slightly async to avoid blocking initial paint
+    // Run slightly async to evitar bloquear o primeiro paint
     setTimeout(()=>{
       fetch(searchUrl).then(r=>r.json()).then((data)=>{
         const hits = (data && data.query && data.query.search) ? data.query.search : [];
-        if (!hits.length) return;
+        if (!hits.length) { attemptOpenverse(); return; }
         const title = hits[0].title;
-        const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+        const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&iiurlwidth=1200&format=json&origin=*`;
         return fetch(infoUrl).then(r=>r.json()).then((d2)=>{
           const pages = d2 && d2.query && d2.query.pages ? d2.query.pages : {};
+          let set = false;
           for (const k in pages){
             const ii = pages[k].imageinfo;
-            if (ii && ii.length && ii[0].url){ imgEl.src = ii[0].url; break; }
+            if (ii && ii.length){
+              const url = ii[0].thumburl || ii[0].url;
+              if (url){ imgEl.src = url; set = true; break; }
+            }
           }
+          if (!set) attemptOpenverse();
         });
-      }).catch(()=>{});
+      }).catch(()=>{ attemptOpenverse(); });
     }, 50);
+  }
+
+  function attemptOpenverse(){
+    try {
+      const q = exName + ' exercício academia';
+      const api = `https://api.openverse.engineering/v1/images/?q=${encodeURIComponent(q)}&license=cc0,cc-by,cc-by-sa&page_size=5`;
+      fetch(api).then(r=>r.json()).then((data)=>{
+        const results = (data && data.results) ? data.results : [];
+        if (!results.length) return;
+        // Prefer sources conhecidas e seguras
+        const preferred = ['flickr','wikimedia','smugmug'];
+        results.sort((a,b)=>{
+          const sa = preferred.includes(String(a.source||'').toLowerCase()) ? 0 : 1;
+          const sb = preferred.includes(String(b.source||'').toLowerCase()) ? 0 : 1;
+          return sa - sb;
+        });
+        const item = results[0];
+        const url = item.thumbnail || item.url;
+        if (url) imgEl.src = url;
+      }).catch(()=>{});
+    } catch {}
   }
 }
 
@@ -972,21 +999,9 @@ if (els.exportWeekFilter) {
 if (els.exportDayFilter) {
   const savedD = localStorage.getItem('plano4s:exportDay') || '';
   els.exportDayFilter.value = savedD;
-          if (!hits.length) { attemptOpenverse(); return; }
-          const title = hits[0].title;
-          const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&iiurlwidth=1200&format=json&origin=*`;
-          return fetch(infoUrl).then(r=>r.json()).then((d2)=>{
-            const pages = d2 && d2.query && d2.query.pages ? d2.query.pages : {};
-            let set = false;
-            for (const k in pages){
-              const ii = pages[k].imageinfo;
-              if (ii && ii.length){
-                const url = ii[0].thumburl || ii[0].url;
-                if (url){ imgEl.src = url; set = true; break; }
-              }
-            }
-            if (!set) attemptOpenverse();
-          });
+  els.exportDayFilter.addEventListener('change', () => {
+    localStorage.setItem('plano4s:exportDay', els.exportDayFilter.value);
+  });
 
 // Export JSON
 if (els.exportJsonBtn) {
