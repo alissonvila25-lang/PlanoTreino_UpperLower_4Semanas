@@ -137,14 +137,17 @@ const els = {
   confirmResetToggle: document.getElementById('confirm-reset'),
 };
 
-// Tabs
-for (const btn of document.querySelectorAll('.tab-btn')) {
+// Tabs (apenas botões de navegação com data-tab)
+const tabButtons = Array.from(document.querySelectorAll('.tab-btn')).filter(b => b.dataset && b.dataset.tab);
+for (const btn of tabButtons) {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('is-active'));
+    tabButtons.forEach(b => b.classList.remove('is-active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('is-active'));
     btn.classList.add('is-active');
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('is-active');
-    state.view = btn.dataset.tab;
+    const tabId = btn.dataset.tab;
+    const panel = document.getElementById(`tab-${tabId}`);
+    if (panel) panel.classList.add('is-active');
+    state.view = tabId;
     render();
   });
 }
