@@ -1,5 +1,5 @@
 // Register SW + atualização automática com aviso
-const APP_VERSION = 'v34';
+const APP_VERSION = 'v32';
 try {
   const verElInit = document.getElementById('version-label');
   if (verElInit) {
@@ -137,7 +137,7 @@ const els = {
   confirmResetToggle: document.getElementById('confirm-reset'),
 };
 
-// Tabs (apenas botões de navegação com data-tab)
+// Tabs (filtra somente botões com data-tab para navegação)
 const tabButtons = Array.from(document.querySelectorAll('.tab-btn')).filter(b => b.dataset && b.dataset.tab);
 for (const btn of tabButtons) {
   btn.addEventListener('click', () => {
