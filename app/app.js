@@ -984,7 +984,7 @@ els.exportBtn.addEventListener('click', () => {
     }
   }
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-        // Attempt remote image (Wikimedia Commons, then Openverse) after local fallbacks
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'progresso-plano-4-semanas.csv'; a.click();
