@@ -1,4 +1,4 @@
-const CACHE_NAME = 'plano-ul-4s-v29';
+const CACHE_NAME = 'plano-ul-4s-v30';
 const ASSETS = [
   './index.html',
   './style.css',
@@ -99,7 +99,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Navegação HTML: usa network-first com fallback para index.html do cache
+  // Navegação HTML: network-first com fallback para index.html do cache
   const accept = req.headers.get('accept') || '';
   const isNavigate = req.mode === 'navigate' || accept.includes('text/html');
   if (isNavigate) {
@@ -115,25 +115,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Normalização para assets com query (?v=...): tenta sem query no cache
   const isStatic = /\.(css|js|png|jpg|jpeg|webp|svg|csv|json|webmanifest)$/i.test(url.pathname);
-  const normalizedUrl = (isStatic && url.search) ? (url.origin + url.pathname) : null;
+  const hasQuery = Boolean(url.search);
+  const normalizedUrl = (isStatic && hasQuery) ? (url.origin + url.pathname) : null;
 
+  // Assets estáticos com query (?v=...): network-first com fallback para cache normalizado
+  if (isStatic && hasQuery) {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return res;
+      }).catch(() => normalizedUrl ? caches.match(normalizedUrl) : caches.match(req))
+    );
+    return;
+  }
+
+  // Demais requisições: cache-first com atualização em background
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
-      if (normalizedUrl) {
-        return caches.match(normalizedUrl).then((normCached) => {
-          if (normCached) return normCached;
-          return fetch(req).then((res) => {
-            if (res && res.ok) {
-              const copy = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-            }
-            return res;
-          });
-        });
-      }
       return fetch(req).then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
@@ -141,6 +144,6 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       });
-    }).catch(() => normalizedUrl ? caches.match(normalizedUrl) : caches.match(req))
+    }).catch(() => caches.match(req))
   );
 });
