@@ -58,20 +58,17 @@ for (const btn of document.querySelectorAll('.tab-btn')) {
 // Load CSVs
 function decodeSmart(ab) {
   const u8 = new Uint8Array(ab);
-  // Detect UTF-8 BOM
   const hasBOM = u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF;
   try {
     let s = new TextDecoder('utf-8').decode(ab);
-    // Remove BOM char if present
     if (hasBOM && s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
-    // Heuristic: if garbled sequences like "Ã" are frequent, fallback to cp1252
     const garbled = (s.match(/Ã./g) || []).length;
     if (!hasBOM && garbled > 3) {
       try { return new TextDecoder('windows-1252').decode(ab); }
       catch { return new TextDecoder('iso-8859-1').decode(ab); }
     }
     return s;
-    pauseBtn.className = 'btn btn-pause';
+  } catch {
     try { return new TextDecoder('windows-1252').decode(ab); }
     catch { return new TextDecoder('iso-8859-1').decode(ab); }
   }
@@ -339,7 +336,7 @@ function renderTreino() {
 
     // Start pause timer button
     const pauseBtn = document.createElement('button');
-    pauseBtn.className = 'btn';
+    pauseBtn.className = 'btn btn-pause';
     pauseBtn.textContent = '⏱️ Pausa';
     pauseBtn.addEventListener('click', ()=>{
       const m = String(ex.Pausa||'').match(/(\d+):(\d+)/);
@@ -540,7 +537,7 @@ function renderSessionCard(ex) {
   inputs.appendChild(inputCarga); inputs.appendChild(inputReps); wrap.appendChild(inputs);
 
   const actions = document.createElement('div'); actions.className = 'actions';
-  const startPause = document.createElement('button'); startPause.className = 'btn'; startPause.textContent = 'Iniciar pausa';
+  const startPause = document.createElement('button'); startPause.className = 'btn btn-pause'; startPause.textContent = 'Iniciar pausa';
   startPause.addEventListener('click', ()=>{ const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; if (window.timerControl) { window.timerControl.startSeconds(s); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; panel.scrollIntoView({behavior:'smooth', block:'start'}); } } });
   actions.appendChild(startPause);
   wrap.appendChild(actions);
@@ -837,6 +834,24 @@ loadCSVs().then(() => render()).catch(err => {
 // Modal handlers
 els.imgModalClose.addEventListener('click', ()=>{ els.imgModal.setAttribute('hidden',''); });
 els.imgModal.addEventListener('click', (e)=>{ if (e.target === els.imgModal) els.imgModal.setAttribute('hidden',''); });
+
+// PWA install prompt (Android/Chrome)
+let deferredPrompt = null;
+const installBtn = document.getElementById('install-btn');
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    const ev = deferredPrompt;
+    deferredPrompt = null;
+    try { await ev.prompt(); } catch {}
+    installBtn.hidden = true;
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installBtn) installBtn.hidden = false;
+});
 
 // Session settings: auto-advance toggle
 if (els.sessionAutoAdvance) {
