@@ -691,7 +691,7 @@ function getPauseConfig(){
 }
 function allowResetButtons(){
   const v = localStorage.getItem('plano4s:showResetButtons');
-  return (v == null) ? true : v === '1';
+  return (v == null) ? false : v === '1';
 }
 function shouldConfirmReset(){
   const v = localStorage.getItem('plano4s:confirmReset');
@@ -1260,7 +1260,7 @@ if (els.sessionAutoAdvance) {
 // Preferences: show reset buttons
 if (els.showResetToggle) {
   const pref = localStorage.getItem('plano4s:showResetButtons');
-  const enabled = (pref == null) ? true : pref === '1';
+  const enabled = (pref == null) ? false : pref === '1';
   els.showResetToggle.checked = enabled;
   els.showResetToggle.addEventListener('change', ()=>{
     localStorage.setItem('plano4s:showResetButtons', els.showResetToggle.checked ? '1' : '0');
