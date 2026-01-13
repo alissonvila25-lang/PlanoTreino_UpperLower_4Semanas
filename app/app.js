@@ -350,6 +350,69 @@ function renderTreino() {
     `;
     card.appendChild(meta);
 
+    // Stage controls também no Treino
+    try {
+      const weekN = Number(state.week);
+      const group = sanitize(ex.Grupo);
+      const { warmupTarget, prepMin, prepMax } = parseSeriesMeta(ex.SeriesBase);
+      const stage = document.createElement('div'); stage.className = 'stage';
+      const cfg = getPauseConfig();
+
+      // Aquecimento apenas no primeiro do grupo
+      if (warmupTarget > 0 && isFirstExerciseOfGroup(group, ex)) {
+        const done = getWarmupCount(weekN, state.day, group);
+        const row = document.createElement('div'); row.className = 'stage-row';
+        const hint = document.createElement('span'); hint.className = 'hint';
+        hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`;
+        row.appendChild(hint);
+        const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento';
+        btn.disabled = done >= warmupTarget;
+        btn.addEventListener('click', ()=>{
+          const n = Math.min(getWarmupCount(weekN, state.day, group) + 1, warmupTarget); setWarmupCount(weekN, state.day, group, n);
+          if (window.timerControl) { window.timerControl.startSeconds(cfg.warmup); const panel = document.getElementById('timer'); if (panel) panel.hidden = false; }
+          hint.textContent = `Aquecimento: ${n}/${warmupTarget}`;
+          if (n >= warmupTarget) btn.disabled = true;
+        });
+        row.appendChild(btn);
+        stage.appendChild(row);
+      }
+
+      // Preparatórias
+      if (prepMax > 0) {
+        const doneP = getPrepCount(weekN, ex._id);
+        const rowP = document.createElement('div'); rowP.className = 'stage-row';
+        const hintP = document.createElement('span'); hintP.className = 'hint';
+        const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
+        hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`;
+        rowP.appendChild(hintP);
+        const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória';
+        btnDone.disabled = doneP >= prepMax;
+        btnDone.addEventListener('click', ()=>{
+          const n = Math.min(getPrepCount(weekN, ex._id) + 1, prepMax); setPrepCount(weekN, ex._id, n);
+          if (window.timerControl) { window.timerControl.startSeconds(cfg.prep); const panel = document.getElementById('timer'); if (panel) panel.hidden = false; }
+          hintP.textContent = `Preparatórias: ${n}/${targetLabel}`;
+          if (n >= prepMax) btnDone.disabled = true;
+        });
+        rowP.appendChild(btnDone);
+        if (prepMin > 0 && doneP < prepMin) {
+          const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
+          btnSkip.addEventListener('click', ()=>{
+            const n = Math.max(prepMin, getPrepCount(weekN, ex._id)); setPrepCount(weekN, ex._id, n);
+            hintP.textContent = `Preparatórias: ${n}/${targetLabel}`;
+            if (window.timerControl) {
+              const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; window.timerControl.startSeconds(s);
+              const panel = document.getElementById('timer'); if (panel) panel.hidden = false;
+            }
+            btnDone.disabled = n >= prepMax; btnSkip.disabled = true;
+          });
+          rowP.appendChild(btnSkip);
+        }
+        stage.appendChild(rowP);
+      }
+
+      if (stage.childElementCount) card.appendChild(stage);
+    } catch (e) { console.error(e); }
+
     if (sanitize(ex.Notas)) {
       const note = document.createElement('div');
       note.className = 'note';
@@ -583,6 +646,17 @@ function parseSeriesMeta(seriesBase){
   return { warmupTarget, prepMin, prepMax };
 }
 
+function getPauseConfig(){
+  const warmup = parseInt(localStorage.getItem('plano4s:pause:warmupSeconds')||'60',10)||60;
+  const prep = parseInt(localStorage.getItem('plano4s:pause:prepSeconds')||'90',10)||90;
+  return { warmup, prep };
+}
+function setPauseConfig(key, value){
+  const v = Math.max(0, parseInt(value,10)||0);
+  if (key === 'warmup') localStorage.setItem('plano4s:pause:warmupSeconds', String(v));
+  if (key === 'prep') localStorage.setItem('plano4s:pause:prepSeconds', String(v));
+}
+
 function warmupKey(week, day, group){ return `plano4s:warmup:S${week}:${day}:${group}`; }
 function getWarmupCount(week, day, group){ return parseInt(localStorage.getItem(warmupKey(week,day,group))||'0',10)||0; }
 function setWarmupCount(week, day, group, n){ localStorage.setItem(warmupKey(week,day,group), String(n)); }
@@ -638,6 +712,7 @@ function renderSessionCard(ex) {
     const group = sanitize(ex.Grupo);
     const { warmupTarget, prepMin, prepMax } = parseSeriesMeta(ex.SeriesBase);
     const stage = document.createElement('div'); stage.className = 'stage';
+    const cfg = getPauseConfig();
 
     // Aquecimento: só no primeiro exercício do grupo
     if (warmupTarget > 0 && isFirstExerciseOfGroup(group, ex)) {
@@ -650,7 +725,7 @@ function renderSessionCard(ex) {
         const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento';
         btn.addEventListener('click', ()=>{
           const n = Math.min(done + 1, warmupTarget); setWarmupCount(weekN, state.day, group, n);
-          if (window.timerControl) { window.timerControl.startSeconds(60); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; } }
+          if (window.timerControl) { window.timerControl.startSeconds(cfg.warmup); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; } }
           // Atualiza contador na UI
           hint.textContent = `Aquecimento: ${n}/${warmupTarget}`;
           if (n >= warmupTarget) btn.disabled = true;
@@ -673,7 +748,7 @@ function renderSessionCard(ex) {
       btnDone.disabled = doneP >= prepMax;
       btnDone.addEventListener('click', ()=>{
         const n = Math.min(getPrepCount(weekN, ex._id) + 1, prepMax); setPrepCount(weekN, ex._id, n);
-        if (window.timerControl) { window.timerControl.startSeconds(90); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; } }
+        if (window.timerControl) { window.timerControl.startSeconds(cfg.prep); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; } }
         hintP.textContent = `Preparatórias: ${n}/${targetLabel}`;
         if (n >= prepMax) btnDone.disabled = true;
       });
@@ -924,6 +999,14 @@ loadCSVs().then(() => render()).catch(err => {
   const pauseBtn = document.getElementById('timer-pause');
   const resetBtn = document.getElementById('timer-reset');
   const presetBtns = document.querySelectorAll('.timer-presets [data-seconds]');
+  // Mini timer flutuante
+  const fab = document.createElement('button');
+  fab.className = 'timer-fab';
+  fab.hidden = true;
+  fab.addEventListener('click', ()=>{
+    try { panel.hidden = false; panel.scrollIntoView({behavior:'smooth', block:'start'}); } catch {}
+  });
+  document.body.appendChild(fab);
 
   let remaining = 0; // seconds
   let running = false;
@@ -936,7 +1019,8 @@ loadCSVs().then(() => render()).catch(err => {
     const r = (s%60).toString().padStart(2,'0');
     return `${m}:${r}`;
   }
-  function updateDisplay(){ display.textContent = fmt(remaining); }
+  function updateDisplay(){ display.textContent = fmt(remaining); fab.textContent = fmt(remaining); }
+  function updateFab(){ fab.hidden = !(running && remaining > 0); }
 
   function tick(ts){
     if(!running){ return; }
@@ -944,13 +1028,14 @@ loadCSVs().then(() => render()).catch(err => {
     const dt = (ts - lastTs)/1000;
     lastTs = ts;
     remaining -= dt;
-    if (remaining <= 0){ remaining = 0; running = false; updateDisplay(); notify(); return; }
+    if (remaining <= 0){ remaining = 0; running = false; updateDisplay(); updateFab(); notify(); return; }
     updateDisplay();
+    updateFab();
     rafId = requestAnimationFrame(tick);
   }
-  function start(){ if(remaining<=0) return; if(!running){ running = true; lastTs = 0; cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick); } }
-  function pause(){ running = false; cancelAnimationFrame(rafId); }
-  function reset(){ pause(); remaining = 0; updateDisplay(); }
+  function start(){ if(remaining<=0) return; if(!running){ running = true; lastTs = 0; cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick); updateFab(); } }
+  function pause(){ running = false; cancelAnimationFrame(rafId); updateFab(); }
+  function reset(){ pause(); remaining = 0; updateDisplay(); updateFab(); }
   function setSeconds(s){ remaining = s; updateDisplay(); }
   function notify(){
     try {
@@ -981,6 +1066,32 @@ loadCSVs().then(() => render()).catch(err => {
   resetBtn.addEventListener('click', reset);
   presetBtns.forEach(b=> b.addEventListener('click', ()=>{ setSeconds(Number(b.dataset.seconds)); }));
 
+  // Configuração de pausas (aquec/prep)
+  try {
+    const controls = panel.querySelector('.timer-controls');
+    if (controls) {
+      const cfgWrap = document.createElement('div');
+      cfgWrap.className = 'timer-presets';
+      const { warmup, prep } = getPauseConfig();
+
+      const wLabel = document.createElement('label'); wLabel.textContent = 'Aquec (s)';
+      const wInput = document.createElement('input'); wInput.type = 'number'; wInput.min = '10'; wInput.step = '5'; wInput.value = String(warmup);
+      wInput.style.width = '72px';
+      wInput.addEventListener('change', ()=>{ setPauseConfig('warmup', wInput.value); });
+      wLabel.appendChild(wInput);
+
+      const pLabel = document.createElement('label'); pLabel.textContent = 'Prep (s)';
+      const pInput = document.createElement('input'); pInput.type = 'number'; pInput.min = '15'; pInput.step = '5'; pInput.value = String(prep);
+      pInput.style.width = '72px';
+      pInput.addEventListener('change', ()=>{ setPauseConfig('prep', pInput.value); });
+      pLabel.appendChild(pInput);
+
+      cfgWrap.appendChild(wLabel);
+      cfgWrap.appendChild(pLabel);
+      controls.appendChild(cfgWrap);
+    }
+  } catch (e) { console.error(e); }
+
   // Predefine com base no exercício atual (Pausa) quando trocar dia/semana
   const oldRenderTreino = renderTreino;
   renderTreino = function(){
@@ -997,6 +1108,7 @@ loadCSVs().then(() => render()).catch(err => {
   // Inicial
   setSeconds(120);
   updateDisplay();
+  updateFab();
 
   // expose minimal API
   window.timerControl = {
