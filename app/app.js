@@ -389,6 +389,16 @@ function renderTreino() {
           if (n >= warmupTarget) btn.disabled = true;
         });
         row.appendChild(btn);
+        // Reset aquecimento
+        const btnResetAq = document.createElement('button'); btnResetAq.className = 'btn btn-danger'; btnResetAq.textContent = 'Reset aquec.';
+        btnResetAq.disabled = done <= 0;
+        btnResetAq.addEventListener('click', ()=>{
+          setWarmupCount(weekN, state.day, group, 0);
+          hint.textContent = `Aquecimento: 0/${warmupTarget}`;
+          btn.disabled = false;
+          btnResetAq.disabled = true;
+        });
+        row.appendChild(btnResetAq);
         stage.appendChild(row);
       }
 
@@ -409,6 +419,17 @@ function renderTreino() {
           if (n >= prepMax) btnDone.disabled = true;
         });
         rowP.appendChild(btnDone);
+        // Reset preparatórias
+        const btnResetPrep = document.createElement('button'); btnResetPrep.className = 'btn btn-danger'; btnResetPrep.textContent = 'Reset prep.';
+        btnResetPrep.disabled = doneP <= 0;
+        btnResetPrep.addEventListener('click', ()=>{
+          setPrepCount(weekN, ex._id, 0);
+          hintP.textContent = `Preparatórias: 0/${targetLabel}`;
+          btnDone.disabled = false;
+          try { if (btnSkip) btnSkip.disabled = false; } catch {}
+          btnResetPrep.disabled = true;
+        });
+        rowP.appendChild(btnResetPrep);
         if (prepMin > 0 && doneP < prepMin) {
           const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
           btnSkip.addEventListener('click', ()=>{
@@ -747,6 +768,15 @@ function renderSessionCard(ex) {
         });
         row.appendChild(btn);
       }
+      // Reset aquecimento
+      const btnResetAq2 = document.createElement('button'); btnResetAq2.className = 'btn btn-danger'; btnResetAq2.textContent = 'Reset aquec.';
+      btnResetAq2.disabled = done <= 0;
+      btnResetAq2.addEventListener('click', ()=>{
+        setWarmupCount(weekN, state.day, group, 0);
+        hint.textContent = `Aquecimento: 0/${warmupTarget}`;
+        btnResetAq2.disabled = true;
+      });
+      row.appendChild(btnResetAq2);
       stage.appendChild(row);
     }
 
@@ -783,6 +813,17 @@ function renderSessionCard(ex) {
         });
         rowP.appendChild(btnSkip);
       }
+      // Reset preparatórias
+      const btnResetPrep2 = document.createElement('button'); btnResetPrep2.className = 'btn btn-danger'; btnResetPrep2.textContent = 'Reset prep.';
+      btnResetPrep2.disabled = doneP <= 0;
+      btnResetPrep2.addEventListener('click', ()=>{
+        setPrepCount(weekN, ex._id, 0);
+        hintP.textContent = `Preparatórias: 0/${targetLabel}`;
+        btnDone.disabled = false;
+        try { if (typeof btnSkip !== 'undefined') btnSkip.disabled = false; } catch {}
+        btnResetPrep2.disabled = true;
+      });
+      rowP.appendChild(btnResetPrep2);
       stage.appendChild(rowP);
     }
 
