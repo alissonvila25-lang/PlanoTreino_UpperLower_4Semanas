@@ -133,6 +133,8 @@ const els = {
   sessionNext: document.getElementById('session-next'),
   sessionComplete: document.getElementById('session-complete'),
   sessionAutoAdvance: document.getElementById('session-auto-advance'),
+  showResetToggle: document.getElementById('show-reset-buttons'),
+  confirmResetToggle: document.getElementById('confirm-reset'),
 };
 
 // Tabs
@@ -687,6 +689,41 @@ function getPauseConfig(){
   const prep = parseInt(localStorage.getItem('plano4s:pause:prepSeconds')||'90',10)||90;
   return { warmup, prep };
 }
+function allowResetButtons(){
+  const v = localStorage.getItem('plano4s:showResetButtons');
+  return (v == null) ? true : v === '1';
+}
+function shouldConfirmReset(){
+  const v = localStorage.getItem('plano4s:confirmReset');
+  return (v == null) ? true : v === '1';
+}
+        if (allowResetButtons()) {
+          // Reset aquecimento
+          const btnResetAq = document.createElement('button'); btnResetAq.className = 'btn btn-danger'; btnResetAq.textContent = 'Reset aquec.';
+          btnResetAq.disabled = done <= 0;
+          btnResetAq.addEventListener('click', ()=>{
+            if (shouldConfirmReset() && !confirm('Tem certeza que deseja resetar o aquecimento?')) return;
+            setWarmupCount(weekN, state.day, group, 0);
+            hint.textContent = `Aquecimento: 0/${warmupTarget}`;
+            btn.disabled = false;
+            btnResetAq.disabled = true;
+          });
+          row.appendChild(btnResetAq);
+        }
+        if (allowResetButtons()) {
+          // Reset preparatórias
+          const btnResetPrep = document.createElement('button'); btnResetPrep.className = 'btn btn-danger'; btnResetPrep.textContent = 'Reset prep.';
+          btnResetPrep.disabled = doneP <= 0;
+          btnResetPrep.addEventListener('click', ()=>{
+            if (shouldConfirmReset() && !confirm('Tem certeza que deseja resetar as preparatórias?')) return;
+            setPrepCount(weekN, ex._id, 0);
+            hintP.textContent = `Preparatórias: 0/${targetLabel}`;
+            btnDone.disabled = false;
+            try { if (btnSkip) btnSkip.disabled = false; } catch {}
+            btnResetPrep.disabled = true;
+          });
+          rowP.appendChild(btnResetPrep);
+        }
 function setPauseConfig(key, value){
   const v = Math.max(0, parseInt(value,10)||0);
   if (key === 'warmup') localStorage.setItem('plano4s:pause:warmupSeconds', String(v));
@@ -768,15 +805,18 @@ function renderSessionCard(ex) {
         });
         row.appendChild(btn);
       }
-      // Reset aquecimento
-      const btnResetAq2 = document.createElement('button'); btnResetAq2.className = 'btn btn-danger'; btnResetAq2.textContent = 'Reset aquec.';
-      btnResetAq2.disabled = done <= 0;
-      btnResetAq2.addEventListener('click', ()=>{
-        setWarmupCount(weekN, state.day, group, 0);
-        hint.textContent = `Aquecimento: 0/${warmupTarget}`;
-        btnResetAq2.disabled = true;
-      });
-      row.appendChild(btnResetAq2);
+      if (allowResetButtons()) {
+        // Reset aquecimento
+        const btnResetAq2 = document.createElement('button'); btnResetAq2.className = 'btn btn-danger'; btnResetAq2.textContent = 'Reset aquec.';
+        btnResetAq2.disabled = done <= 0;
+        btnResetAq2.addEventListener('click', ()=>{
+          if (shouldConfirmReset() && !confirm('Tem certeza que deseja resetar o aquecimento?')) return;
+          setWarmupCount(weekN, state.day, group, 0);
+          hint.textContent = `Aquecimento: 0/${warmupTarget}`;
+          btnResetAq2.disabled = true;
+        });
+        row.appendChild(btnResetAq2);
+      }
       stage.appendChild(row);
     }
 
@@ -1214,5 +1254,27 @@ if (els.sessionAutoAdvance) {
   els.sessionAutoAdvance.checked = enabled;
   els.sessionAutoAdvance.addEventListener('change', ()=>{
     localStorage.setItem('plano4s:autoAdvance', els.sessionAutoAdvance.checked ? '1' : '0');
+  });
+}
+
+// Preferences: show reset buttons
+if (els.showResetToggle) {
+  const pref = localStorage.getItem('plano4s:showResetButtons');
+  const enabled = (pref == null) ? true : pref === '1';
+  els.showResetToggle.checked = enabled;
+  els.showResetToggle.addEventListener('change', ()=>{
+    localStorage.setItem('plano4s:showResetButtons', els.showResetToggle.checked ? '1' : '0');
+    // Re-render to reflect visibility changes
+    render();
+  });
+}
+
+// Preferences: confirm reset actions
+if (els.confirmResetToggle) {
+  const pref = localStorage.getItem('plano4s:confirmReset');
+  const enabled = (pref == null) ? true : pref === '1';
+  els.confirmResetToggle.checked = enabled;
+  els.confirmResetToggle.addEventListener('change', ()=>{
+    localStorage.setItem('plano4s:confirmReset', els.confirmResetToggle.checked ? '1' : '0');
   });
 }
