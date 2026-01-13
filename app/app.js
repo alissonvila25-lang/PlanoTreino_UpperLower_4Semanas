@@ -219,26 +219,7 @@ async function loadCSVs() {
     r.Protocolo = normalizeText(r.Protocolo);
     r.SeriesBase = normalizeText(r.SeriesBase);
     r.Pausa = normalizeText(r.Pausa);
-// PWA install prompt (Android/Chrome)
-let deferredPrompt = null;
-const installBtn = document.getElementById('install-btn');
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    const ev = deferredPrompt;
-    deferredPrompt = null;
-    try {
-      await ev.prompt();
-    } catch {}
-    installBtn.hidden = true;
-  });
-}
     r.Notas = normalizeText(r.Notas);
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (installBtn) installBtn.hidden = false;
-});
     r._id = `${r.Dia}|${r.Exercicio}`;
     return r;
   });
@@ -724,33 +705,6 @@ function shouldConfirmReset(){
   const v = localStorage.getItem('plano4s:confirmReset');
   return (v == null) ? true : v === '1';
 }
-        if (allowResetButtons()) {
-          // Reset aquecimento
-          const btnResetAq = document.createElement('button'); btnResetAq.className = 'btn btn-danger'; btnResetAq.textContent = 'Reset aquec.';
-          btnResetAq.disabled = done <= 0;
-          btnResetAq.addEventListener('click', ()=>{
-            if (shouldConfirmReset() && !confirm('Tem certeza que deseja resetar o aquecimento?')) return;
-            setWarmupCount(weekN, state.day, group, 0);
-            hint.textContent = `Aquecimento: 0/${warmupTarget}`;
-            btn.disabled = false;
-            btnResetAq.disabled = true;
-          });
-          row.appendChild(btnResetAq);
-        }
-        if (allowResetButtons()) {
-          // Reset preparatórias
-          const btnResetPrep = document.createElement('button'); btnResetPrep.className = 'btn btn-danger'; btnResetPrep.textContent = 'Reset prep.';
-          btnResetPrep.disabled = doneP <= 0;
-          btnResetPrep.addEventListener('click', ()=>{
-            if (shouldConfirmReset() && !confirm('Tem certeza que deseja resetar as preparatórias?')) return;
-            setPrepCount(weekN, ex._id, 0);
-            hintP.textContent = `Preparatórias: 0/${targetLabel}`;
-            btnDone.disabled = false;
-            try { if (btnSkip) btnSkip.disabled = false; } catch {}
-            btnResetPrep.disabled = true;
-          });
-          rowP.appendChild(btnResetPrep);
-        }
 function setPauseConfig(key, value){
   const v = Math.max(0, parseInt(value,10)||0);
   if (key === 'warmup') localStorage.setItem('plano4s:pause:warmupSeconds', String(v));

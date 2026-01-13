@@ -99,7 +99,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Navegação HTML: network-first com fallback para index.html do cache
+  // Navegação HTML: usa network-first com fallback para index.html do cache
   const accept = req.headers.get('accept') || '';
   const isNavigate = req.mode === 'navigate' || accept.includes('text/html');
   if (isNavigate) {
@@ -115,12 +115,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Assets estáticos: se tiver query (?v=...), usa network-first para sempre pegar a versão mais nova; caso contrário, cache-first
   const isStatic = /\.(css|js|png|jpg|jpeg|webp|svg|csv|json|webmanifest)$/i.test(url.pathname);
   const hasQuery = Boolean(url.search);
-  const normalizedUrl = (isStatic && hasQuery) ? (url.origin + url.pathname) : null;
+  const normalizedUrl = isStatic ? (url.origin + url.pathname) : null;
 
-  // Assets estáticos com query (?v=...): network-first com fallback para cache normalizado
   if (isStatic && hasQuery) {
+    // Network-first para assets versionados
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.ok) {
@@ -128,12 +129,15 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
         }
         return res;
-      }).catch(() => normalizedUrl ? caches.match(normalizedUrl) : caches.match(req))
+      }).catch(async () => {
+        // Fallback: versão sem query ou própria requisição
+        return (normalizedUrl && await caches.match(normalizedUrl)) || caches.match(req);
+      })
     );
     return;
   }
 
-  // Demais requisições: cache-first com atualização em background
+  // Cache-first para demais requisições (inclui imagens sem query e outros estáticos)
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
@@ -144,6 +148,6 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       });
-    }).catch(() => caches.match(req))
+    }).catch(() => (normalizedUrl ? caches.match(normalizedUrl) : caches.match(req)))
   );
 });
