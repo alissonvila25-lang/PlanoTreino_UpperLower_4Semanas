@@ -1,4 +1,4 @@
-const CACHE_NAME = 'plano-ul-4s-v28';
+const CACHE_NAME = 'plano-ul-4s-v29';
 const ASSETS = [
   './index.html',
   './style.css',

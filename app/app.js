@@ -71,7 +71,7 @@ function decodeSmart(ab) {
       catch { return new TextDecoder('iso-8859-1').decode(ab); }
     }
     return s;
-  } catch {
+    pauseBtn.className = 'btn btn-pause';
     try { return new TextDecoder('windows-1252').decode(ab); }
     catch { return new TextDecoder('iso-8859-1').decode(ab); }
   }
@@ -109,7 +109,26 @@ async function loadCSVs() {
     r.Protocolo = normalizeText(r.Protocolo);
     r.SeriesBase = normalizeText(r.SeriesBase);
     r.Pausa = normalizeText(r.Pausa);
+// PWA install prompt (Android/Chrome)
+let deferredPrompt = null;
+const installBtn = document.getElementById('install-btn');
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    const ev = deferredPrompt;
+    deferredPrompt = null;
+    try {
+      await ev.prompt();
+    } catch {}
+    installBtn.hidden = true;
+  });
+}
     r.Notas = normalizeText(r.Notas);
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installBtn) installBtn.hidden = false;
+});
     r._id = `${r.Dia}|${r.Exercicio}`;
     return r;
   });

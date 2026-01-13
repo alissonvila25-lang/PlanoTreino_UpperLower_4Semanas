@@ -63,6 +63,9 @@ main { padding: 12px; padding-bottom: 64px; }
 .badge { border:1px solid var(--border); background:#0d1515; padding:2px 6px; border-radius: 6px; }
 .btn { background: var(--accent); color: white; border:0; border-radius: 8px; padding: 8px 10px; cursor: pointer; }
 .btn-danger { background: var(--danger); }
+.btn-pause { font-size: 16px; padding: 14px 18px; min-height: 52px; border-radius: 4px; font-weight: 600; letter-spacing: 0.3px; }
+.btn-pause:active { transform: scale(0.98); }
+.btn:focus { outline: 2px solid rgba(255,255,255,0.2); outline-offset: 2px; }
 .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 6px 12px; display:flex; justify-content:center; border-top:1px solid var(--border); background: rgba(11,18,18,0.9); backdrop-filter: blur(8px); }
 
 .tab { display:none; }
