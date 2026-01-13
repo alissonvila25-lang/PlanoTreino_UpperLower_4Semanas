@@ -567,6 +567,37 @@ function markPRIfAny(exId, week, cargaStr) {
 
 function hasPR(exId, week) { return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
 
+// Série helpers: aquecimento e preparatórias
+function parseSeriesMeta(seriesBase){
+  const txt = sanitize(seriesBase||'');
+  let warmupTarget = 0;
+  let prepMin = 0, prepMax = 0;
+  const mAq = txt.match(/Aquec\s*:?\s*(\d+)/i);
+  if (mAq) warmupTarget = parseInt(mAq[1],10)||0;
+  const mPrepRange = txt.match(/Prep\s*:?\s*(\d+)\s*[-–]\s*(\d+)/i);
+  const mPrepX = txt.match(/Prep\s*:?\s*(\d+)\s*[x×]/i);
+  if (mPrepRange) { prepMin = parseInt(mPrepRange[1],10)||0; prepMax = parseInt(mPrepRange[2],10)||prepMin; }
+  else if (mPrepX) { prepMin = parseInt(mPrepX[1],10)||0; prepMax = prepMin; }
+  // Defaults se houver menção a Prep sem números claros
+  if (/Prep/i.test(txt) && (prepMin===0 && prepMax===0)) { prepMin = 2; prepMax = 3; }
+  return { warmupTarget, prepMin, prepMax };
+}
+
+function warmupKey(week, day, group){ return `plano4s:warmup:S${week}:${day}:${group}`; }
+function getWarmupCount(week, day, group){ return parseInt(localStorage.getItem(warmupKey(week,day,group))||'0',10)||0; }
+function setWarmupCount(week, day, group, n){ localStorage.setItem(warmupKey(week,day,group), String(n)); }
+
+function prepKey(week, exId){ return `plano4s:prep:S${week}:${exId}`; }
+function getPrepCount(week, exId){ return parseInt(localStorage.getItem(prepKey(week,exId))||'0',10)||0; }
+function setPrepCount(week, exId, n){ localStorage.setItem(prepKey(week,exId), String(n)); }
+
+function isFirstExerciseOfGroup(group, ex){
+  const dayList = state.session && state.session.active ? state.session.list : state.plan.filter(x => sanitize(x.Dia) === state.day);
+  const firstIdx = dayList.findIndex(e => sanitize(e.Grupo) === group);
+  const idx = dayList.findIndex(e => e._id === ex._id);
+  return firstIdx !== -1 && idx === firstIdx;
+}
+
 function renderSessionCard(ex) {
   const week = Number(state.week);
   const entry = getEntry(ex._id, week);
@@ -600,6 +631,73 @@ function renderSessionCard(ex) {
   titleWrap.appendChild(meta);
   header.appendChild(titleWrap);
   wrap.appendChild(header);
+
+  // Stage controls: aquecimento (primeiro do grupo) e preparatórias
+  try {
+    const weekN = Number(state.week);
+    const group = sanitize(ex.Grupo);
+    const { warmupTarget, prepMin, prepMax } = parseSeriesMeta(ex.SeriesBase);
+    const stage = document.createElement('div'); stage.className = 'stage';
+
+    // Aquecimento: só no primeiro exercício do grupo
+    if (warmupTarget > 0 && isFirstExerciseOfGroup(group, ex)) {
+      const done = getWarmupCount(weekN, state.day, group);
+      const row = document.createElement('div'); row.className = 'stage-row';
+      const hint = document.createElement('span'); hint.className = 'hint';
+      hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`;
+      row.appendChild(hint);
+      if (done < warmupTarget) {
+        const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento';
+        btn.addEventListener('click', ()=>{
+          const n = Math.min(done + 1, warmupTarget); setWarmupCount(weekN, state.day, group, n);
+          if (window.timerControl) { window.timerControl.startSeconds(60); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; } }
+          // Atualiza contador na UI
+          hint.textContent = `Aquecimento: ${n}/${warmupTarget}`;
+          if (n >= warmupTarget) btn.disabled = true;
+        });
+        row.appendChild(btn);
+      }
+      stage.appendChild(row);
+    }
+
+    // Preparatórias: por exercício (range 2-3 ou fixo)
+    if (prepMax > 0) {
+      const doneP = getPrepCount(weekN, ex._id);
+      const rowP = document.createElement('div'); rowP.className = 'stage-row';
+      const hintP = document.createElement('span'); hintP.className = 'hint';
+      const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
+      hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`;
+      rowP.appendChild(hintP);
+
+      const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória';
+      btnDone.disabled = doneP >= prepMax;
+      btnDone.addEventListener('click', ()=>{
+        const n = Math.min(getPrepCount(weekN, ex._id) + 1, prepMax); setPrepCount(weekN, ex._id, n);
+        if (window.timerControl) { window.timerControl.startSeconds(90); const panel = document.getElementById('timer'); if (panel) { panel.hidden = false; } }
+        hintP.textContent = `Preparatórias: ${n}/${targetLabel}`;
+        if (n >= prepMax) btnDone.disabled = true;
+      });
+      rowP.appendChild(btnDone);
+
+      if (prepMin > 0 && doneP < prepMin) {
+        const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
+        btnSkip.addEventListener('click', ()=>{
+          const n = Math.max(prepMin, getPrepCount(weekN, ex._id)); setPrepCount(weekN, ex._id, n);
+          hintP.textContent = `Preparatórias: ${n}/${targetLabel}`;
+          // Opcional: iniciar pausa de 2:00 já para a série válida
+          if (window.timerControl) {
+            const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; window.timerControl.startSeconds(s);
+            const panel = document.getElementById('timer'); if (panel) panel.hidden = false;
+          }
+          btnDone.disabled = n >= prepMax; btnSkip.disabled = true;
+        });
+        rowP.appendChild(btnSkip);
+      }
+      stage.appendChild(rowP);
+    }
+
+    if (stage.childElementCount) { wrap.appendChild(stage); }
+  } catch (e) { console.error(e); }
 
   if (sanitize(ex.Notas)) { const note = document.createElement('div'); note.className = 'note'; note.textContent = sanitize(ex.Notas); wrap.appendChild(note); }
   if (entry.nota) { const noteUser = document.createElement('div'); noteUser.className = 'note'; noteUser.textContent = `Nota S${week}: ${entry.nota}`; wrap.appendChild(noteUser); }

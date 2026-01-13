@@ -82,10 +82,15 @@ main { padding: 12px; padding-bottom: 64px; }
 .chart-value { width: 28px; text-align: right; color: var(--muted); font-size: 12px; }
 
 /* Timer */
-.timer-panel { background: var(--card); border:1px solid var(--border); border-radius: 12px; padding: 12px; margin: 12px; }
+.timer-panel { position: sticky; top: 104px; z-index: 3; background: var(--card); border:1px solid var(--border); border-radius: 12px; padding: 12px; margin: 12px; }
 .timer-display { font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }
 .timer-controls { display:flex; flex-wrap: wrap; gap: 8px; align-items:center; }
 .timer-presets { display:flex; gap: 8px; }
+
+/* Stage (aquecimento/preparatórias) */
+.stage { display: grid; gap: 6px; margin-top: 8px; }
+.stage-row { display:flex; gap: 8px; align-items: center; }
+.stage-row .hint { color: var(--muted); font-size: 12px; }
 
 /* Exercise media */
 .ex-header { display:flex; align-items:center; gap:10px; }
