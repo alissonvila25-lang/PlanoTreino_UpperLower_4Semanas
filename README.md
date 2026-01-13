@@ -43,3 +43,8 @@ Dicas rápidas:
 ## Deploy estático (Vercel)
 - Arquivo `vercel.json` incluído para publicar `app/` como site estático e aplicar fallback SPA para `index.html`.
 - Basta importar o projeto no Vercel; a URL fixa será gerada (HTTPS).
+
+---
+
+Deploy trigger: v32 • 2026-01-13  
+Este commit serve apenas para reexecutar o workflow do GitHub Pages.
