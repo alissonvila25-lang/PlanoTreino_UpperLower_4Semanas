@@ -44,7 +44,7 @@ function showUpdateBanner(message, actionLabel, onClick) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`);
+      const reg = await navigator.serviceWorker.register(`./sw.v32.js`);
 
       // Recarrega automaticamente quando o novo SW assumir controle
       let refreshing = false;
