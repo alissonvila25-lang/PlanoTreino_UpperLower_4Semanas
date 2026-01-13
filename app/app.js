@@ -69,11 +69,18 @@ if ('serviceWorker' in navigator) {
         });
       });
 
-      // Mensagens do SW (opcional)
+      // Mensagens do SW: atualiza rótulo de versão visível
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event?.data?.type === 'SW_ACTIVATED') {
-          // Podemos informar versão, se desejado
-          // console.log('Service Worker ativado:', event.data.version);
+          try {
+            const verEl = document.getElementById('version-label');
+            if (verEl && event.data.version) {
+              const raw = String(event.data.version);
+              const short = raw.replace(/^.*-v/, 'v');
+              verEl.textContent = short;
+              verEl.title = raw;
+            }
+          } catch {}
         }
       });
     } catch (e) {
@@ -1121,6 +1128,17 @@ loadCSVs().then(() => render()).catch(err => {
 // Modal handlers
 els.imgModalClose.addEventListener('click', ()=>{ els.imgModal.setAttribute('hidden',''); });
 els.imgModal.addEventListener('click', (e)=>{ if (e.target === els.imgModal) els.imgModal.setAttribute('hidden',''); });
+
+// QR modal handlers
+(function initQR(){
+  const btn = document.getElementById('qr-btn');
+  const modal = document.getElementById('qr-modal');
+  const close = document.getElementById('qr-modal-close');
+  if (!btn || !modal || !close) return;
+  btn.addEventListener('click', ()=>{ modal.removeAttribute('hidden'); });
+  close.addEventListener('click', ()=>{ modal.setAttribute('hidden',''); });
+  modal.addEventListener('click', (e)=>{ if (e.target === modal) modal.setAttribute('hidden',''); });
+})();
 
 // PWA install prompt (Android/Chrome)
 let deferredPrompt = null;

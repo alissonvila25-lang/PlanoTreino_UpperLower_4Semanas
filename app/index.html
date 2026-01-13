@@ -17,10 +17,12 @@
       <div class="title">
         <h1>Plano Upper/Lower</h1>
         <span class="subtitle">4 semanas</span>
+        <span id="version-label" class="subtitle" aria-label="Versão do app" style="margin-left:8px;"></span>
       </div>
       <div class="selectors">
         <button id="theme-toggle" class="tab-btn" title="Alternar tema" aria-label="Alternar tema">Tema</button>
         <button id="timer-toggle" class="tab-btn" title="Mostrar/ocultar temporizador" aria-label="Mostrar/ocultar temporizador">Timer</button>
+        <button id="qr-btn" class="tab-btn" title="Mostrar QR de acesso" aria-label="Mostrar QR de acesso">QR</button>
         <button id="install-btn" class="tab-btn" hidden title="Instalar aplicativo" aria-label="Instalar aplicativo">Instalar</button>
         <label>
           Semana
@@ -136,6 +138,17 @@
         <img id="img-modal-src" alt="Exercício" />
         <div class="modal-actions">
           <button id="img-modal-close" class="btn btn-danger">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" class="modal" hidden>
+      <div class="modal-content">
+        <img id="qr-img" alt="QR Code de acesso" src="./qr_fixed.png" />
+        <div class="modal-actions">
+          <a id="qr-open-link" class="btn" href="https://alissonvila25-lang.github.io/PlanoTreino_UpperLower_4Semanas/" target="_blank" rel="noopener">Abrir URL</a>
+          <button id="qr-modal-close" class="btn btn-danger">Fechar</button>
         </div>
       </div>
     </div>
