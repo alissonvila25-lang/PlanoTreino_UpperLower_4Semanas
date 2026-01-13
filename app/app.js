@@ -1,5 +1,5 @@
 // Register SW + atualização automática com aviso
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v33';
 try {
   const verElInit = document.getElementById('version-label');
   if (verElInit) {
