@@ -1,0 +1,29 @@
+{
+  "name": "Plano Upper/Lower · 4 Semanas",
+  "short_name": "Plano UL 4S",
+  "start_url": "./index.html?cb=v32",
+  "display": "standalone",
+  "background_color": "#0b1212",
+  "theme_color": "#0f766e",
+  "description": "Treino Upper/Lower com 4 semanas, técnicas GER10–GER14, offline e com progresso local.",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
