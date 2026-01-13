@@ -1,4 +1,12 @@
 // Register SW + atualização automática com aviso
+const APP_VERSION = 'v29';
+try {
+  const verElInit = document.getElementById('version-label');
+  if (verElInit) {
+    verElInit.textContent = APP_VERSION;
+    verElInit.title = `app ${APP_VERSION}`;
+  }
+} catch {}
 function showUpdateBanner(message, actionLabel, onClick) {
   try {
     const bar = document.createElement('div');
@@ -36,7 +44,7 @@ function showUpdateBanner(message, actionLabel, onClick) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register('./sw.js');
+      const reg = await navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`);
 
       // Recarrega automaticamente quando o novo SW assumir controle
       let refreshing = false;
