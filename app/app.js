@@ -187,9 +187,28 @@ function normalizeText(s) {
   return out;
 }
 
+// Robust fetch: tries multiple relative paths (useful in local dev)
+async function fetchCsvArrayBuffer(paths) {
+  for (const p of paths) {
+    try {
+      const r = await fetch(p);
+      if (r && r.ok) return r.arrayBuffer();
+    } catch {}
+  }
+  throw new Error('Falha ao buscar CSV em caminhos: ' + paths.join(', '));
+}
+
 async function loadCSVs() {
-  const planBuf = await fetch('./plano-4-semanas.csv').then(r => r.arrayBuffer());
-  const techBuf = await fetch('./tecnicas.csv').then(r => r.arrayBuffer());
+  const planBuf = await fetchCsvArrayBuffer([
+    './plano-4-semanas.csv',
+    '../plano-4-semanas.csv',
+    '/plano-4-semanas.csv'
+  ]);
+  const techBuf = await fetchCsvArrayBuffer([
+    './tecnicas.csv',
+    '../tecnicas.csv',
+    '/tecnicas.csv'
+  ]);
   const planText = decodeSmart(planBuf);
   const techText = decodeSmart(techBuf);
   const plan = Papa.parse(planText, { header: true, skipEmptyLines: true }).data;
@@ -328,6 +347,10 @@ function renderTreino() {
   const day = state.day;
   const list = state.plan.filter(x => sanitize(x.Dia) === day);
   els.exerciseList.innerHTML = '';
+  if (!list.length) {
+    els.exerciseList.innerHTML = '<div class="card">Nenhum exercício encontrado para o dia selecionado. Verifique se os CSVs foram carregados.</div>';
+    return;
+  }
   for (const ex of list) {
     const id = ex._id;
     const entry = getEntry(id, week);
@@ -554,6 +577,10 @@ function renderTreino() {
 
 function renderTecnicas() {
   els.techList.innerHTML = '';
+  if (!state.techniques || !state.techniques.length) {
+    els.techList.innerHTML = '<div class="card">Técnicas não carregadas. Verifique sua conexão ou servidor local.</div>';
+    return;
+  }
   for (const t of state.techniques) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -903,7 +930,13 @@ function renderSessao() {
   els.sessionPrev.disabled = state.session.index <= 0;
   els.sessionNext.disabled = state.session.index >= (state.session.list.length - 1);
   els.sessionComplete.disabled = false;
-
+  if (!state.session.list || !state.session.list.length) {
+    els.sessionBody.innerHTML = '<div class="card">Nenhum exercício disponível para o dia selecionado. Verifique se o plano foi carregado.</div>';
+    els.sessionPrev.disabled = true;
+    els.sessionNext.disabled = true;
+    els.sessionComplete.disabled = true;
+    return;
+  }
   const ex = state.session.list[state.session.index];
   els.sessionBody.innerHTML = '';
   const { node, getCarga } = renderSessionCard(ex);
@@ -923,6 +956,14 @@ function renderSessao() {
 
 function startSession() {
   const list = state.plan.filter(x => sanitize(x.Dia) === state.day);
+  if (!list.length) {
+    alert('Nenhum exercício para o dia selecionado. Confira a aba Treino ou verifique o carregamento dos CSVs.');
+    state.session.active = false;
+    state.session.list = [];
+    state.session.index = 0;
+    renderSessao();
+    return;
+  }
   state.session.active = true;
   state.session.list = list;
   const firstPending = list.findIndex(e => !getEntry(e._id, Number(state.week)).done);
