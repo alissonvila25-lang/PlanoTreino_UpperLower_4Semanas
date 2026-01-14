@@ -30,6 +30,14 @@ jobs:
       - name: Deploy to gh-pages branch
         run: |
           git fetch origin
+          # Clean up temporary branch if it exists from a previous failed run
+          git branch -D gh-pages-tmp 2>/dev/null || true
+          # Verify app directory exists
+          if [ ! -d "app" ]; then
+            echo "Error: app directory does not exist"
+            exit 1
+          fi
+          # Create subtree split and deploy
           git subtree split --prefix app -b gh-pages-tmp
           git push origin gh-pages-tmp:gh-pages -f
           git branch -D gh-pages-tmp
