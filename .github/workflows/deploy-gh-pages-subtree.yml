@@ -1,0 +1,35 @@
+name: Deploy app to gh-pages using git subtree
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages-subtree
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for subtree split
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy to gh-pages branch
+        run: |
+          git fetch origin
+          git subtree split --prefix app -b gh-pages-tmp
+          git push origin gh-pages-tmp:gh-pages -f
+          git branch -D gh-pages-tmp
