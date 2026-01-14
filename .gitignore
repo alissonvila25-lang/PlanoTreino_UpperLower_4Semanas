@@ -1,0 +1,20 @@
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Backup files
+backup_*/
+
+# Cloudflared files
+cloudflared.exe
+cloudflared.log
+cloudflared.err.log
+
+# Build artifacts and archives
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db

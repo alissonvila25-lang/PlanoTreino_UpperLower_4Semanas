@@ -32,6 +32,7 @@ Dicas rápidas:
 
 ## Deploy estático (GitHub Pages)
 - Incluído workflow em `.github/workflows/pages.yml` que publica o conteúdo de `app/` no GitHub Pages.
+- Incluído workflow alternativo em `.github/workflows/deploy-gh-pages-subtree.yml` que usa `git subtree split` para criar o branch `gh-pages`.
 - Adicionado `app/.nojekyll` para evitar processamento do Jekyll.
 
 ### Passos
@@ -39,6 +40,13 @@ Dicas rápidas:
 2. A aba “Actions” rodará o workflow e criará o deploy.
 3. Em “Settings → Pages”, a URL aparecerá após o primeiro deploy (formato `https://<usuario>.github.io/<repositorio>/`).
 4. Abra no celular e instale a PWA.
+
+#### Opções de Workflow
+- **pages.yml**: Usa GitHub Pages deployment com artifacts (recomendado)
+- **deploy-gh-pages-subtree.yml**: Usa `git subtree split` para publicar o diretório `app/` no branch `gh-pages`
+- **deploy-ghpages-branch.yml**: Usa peaceiris/actions-gh-pages para publicar no branch `gh-pages`
+
+Para usar o workflow subtree, configure em "Settings → Pages" para usar o branch `gh-pages` como fonte.
 
 ## Deploy estático (Vercel)
 - Arquivo `vercel.json` incluído para publicar `app/` como site estático e aplicar fallback SPA para `index.html`.
