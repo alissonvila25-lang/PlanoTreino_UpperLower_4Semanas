@@ -84,7 +84,44 @@ function tryImportFlexible(obj){
   }
   // Format 2: { 'app2:...': value, ... }
   if (obj && typeof obj === 'object' && !Array.isArray(obj)){
-    for (const [k,v] of Object.entries(obj)){ if (String(k).startsWith('app2:')) { localStorage.setItem(k, String(v)); count++; } }
+    for (const [k,v] of Object.entries(obj)){
+      if (String(k).startsWith('app2:')) { localStorage.setItem(k, String(v)); count++; }
+      else if (String(k).startsWith('plano4s:')) {
+        const kk = String(k);
+        // theme/autoAdvance globals
+        const g = kk.match(/^plano4s:(theme|autoAdvance)$/i);
+        if (g){ localStorage.setItem(`app2:${g[1]}`, String(v)); count++; continue; }
+        // plano4s:<Dia>|<Exercicio>:S<week>:<field>
+        const m = kk.match(/^plano4s:(.+?):S(\d+):(carga|reps|nota|done|pr)$/i);
+        if (m){
+          const id = m[1]; const w = parseInt(m[2],10)||0; const field = m[3].toLowerCase();
+          if (w>=1 && w<=4){
+            if (field === 'done'){ localStorage.setItem(keyFor(id,w,'done'), (v===true || String(v)==='1') ? '1' : '0'); count++; }
+            else if (field === 'pr'){ localStorage.setItem(keyFor(id,w,'pr'), (v===true || String(v)==='1') ? '1' : '0'); count++; }
+            else { localStorage.setItem(keyFor(id,w,field), String(v)); count++; }
+          }
+        }
+      }
+    }
+    if (count>0) return { count };
+  }
+  // Format 2b: { version, exportedAt, data: { 'plano4s:...': value } }
+  const dataObj = obj && (obj.data || obj.Data);
+  if (dataObj && typeof dataObj === 'object'){
+    for (const [k,v] of Object.entries(dataObj)){
+      const kk = String(k);
+      const g = kk.match(/^(?:plano4s|app2):(theme|autoAdvance)$/i);
+      if (g){ localStorage.setItem(`app2:${g[1]}`, String(v)); count++; continue; }
+      const m = kk.match(/^(?:plano4s|app2):(.+?):S(\d+):(carga|reps|nota|done|pr)$/i);
+      if (m){
+        const id = m[1]; const w = parseInt(m[2],10)||0; const field = m[3].toLowerCase();
+        if (w>=1 && w<=4){
+          if (field === 'done'){ localStorage.setItem(keyFor(id,w,'done'), (v===true || String(v)==='1') ? '1' : '0'); count++; }
+          else if (field === 'pr'){ localStorage.setItem(keyFor(id,w,'pr'), (v===true || String(v)==='1') ? '1' : '0'); count++; }
+          else { localStorage.setItem(keyFor(id,w,field), String(v)); count++; }
+        }
+      }
+    }
     if (count>0) return { count };
   }
   // Format 3: Array of exercise progress rows
