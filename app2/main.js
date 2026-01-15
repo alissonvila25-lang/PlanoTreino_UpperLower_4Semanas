@@ -254,6 +254,10 @@ function renderSessao(){
   els.sessionNext.disabled = state.session.index >= (state.session.list.length - 1);
   els.sessionComplete.disabled = false;
   els.sessionComplete.textContent = 'Concluir e Pausar';
+  // Esconde botões da barra; controles estarão dentro do card
+  els.sessionPrev.style.display = 'none';
+  els.sessionNext.style.display = 'none';
+  els.sessionComplete.style.display = 'none';
   if (els.sessionProgress) {
     const total = state.session.list.length;
     const current = Math.min(state.session.index + 1, total);
@@ -339,6 +343,25 @@ function renderSessao(){
   const repsEl = document.createElement('input'); repsEl.type = 'text'; repsEl.placeholder = repsCsv || 'ex: 6-8'; repsEl.value = entry.reps || '';
   repsEl.addEventListener('change', ()=> setEntry(id, week, 'reps', repsEl.value)); inputs.appendChild(repsEl);
   card.appendChild(inputs);
+
+  // Controles de navegação dentro do card
+  const actionsCard = document.createElement('div'); actionsCard.className = 'actions';
+  const btnPrev = document.createElement('button'); btnPrev.className = 'btn'; btnPrev.textContent = 'Anterior'; btnPrev.disabled = state.session.index <= 0;
+  btnPrev.addEventListener('click', () => { if (state.session.index > 0) { state.session.index--; renderSessao(); } });
+  const btnComplete = document.createElement('button'); btnComplete.className = 'btn'; btnComplete.textContent = 'Concluir e Pausar';
+  btnComplete.addEventListener('click', () => {
+    setEntry(id, week, 'done', '1');
+    markPRIfAny(id, week, cargaEl.value);
+    const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
+    setSeconds(s); start(); els.timerPanel.hidden = false;
+    if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
+  });
+  const btnNext = document.createElement('button'); btnNext.className = 'btn'; btnNext.textContent = 'Próximo'; btnNext.disabled = state.session.index >= (state.session.list.length - 1);
+  btnNext.addEventListener('click', () => { if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); } });
+  actionsCard.appendChild(btnPrev);
+  actionsCard.appendChild(btnComplete);
+  actionsCard.appendChild(btnNext);
+  card.appendChild(actionsCard);
   const wrap = document.createElement('div');
   wrap.appendChild(progress);
   wrap.appendChild(card);
