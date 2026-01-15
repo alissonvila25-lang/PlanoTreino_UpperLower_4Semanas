@@ -6,8 +6,10 @@ const APP_VERSION = 'v30';
     if (verElInit) { verElInit.textContent = APP_VERSION; verElInit.title = `app ${APP_VERSION}`; }
   } catch {}
 
-  // Register service worker on load
-  if ('serviceWorker' in navigator) {
+  // Register service worker on load (skip if ?no-sw=1)
+  const params = new URLSearchParams(window.location.search);
+  const skipSW = params.has('no-sw');
+  if ('serviceWorker' in navigator && !skipSW) {
     window.addEventListener('load', async () => {
       try {
         const reg = await navigator.serviceWorker.register('./sw.v30.js?v=30');
