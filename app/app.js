@@ -1005,30 +1005,11 @@ if (els.exportDayFilter) {
 	els.exportDayFilter.addEventListener('change', () => {
 		localStorage.setItem('plano4s:exportDay', els.exportDayFilter.value);
 	});
+}
+
 
 // Export JSON
 if (els.exportJsonBtn) {
-
-		function attemptOpenverse(){
-			try {
-				const q = exName + ' exercício academia';
-				const api = `https://api.openverse.engineering/v1/images/?q=${encodeURIComponent(q)}&license=cc0,cc-by,cc-by-sa&page_size=5`;
-				fetch(api).then(r=>r.json()).then((data)=>{
-					const results = (data && data.results) ? data.results : [];
-					if (!results.length) return;
-					// prefer safe sources
-					const preferred = ['flickr','wikimedia','smugmug'];
-					results.sort((a,b)=>{
-						const sa = preferred.includes(String(a.source||'').toLowerCase()) ? 0 : 1;
-						const sb = preferred.includes(String(b.source||'').toLowerCase()) ? 0 : 1;
-						return sa - sb;
-					});
-					const item = results[0];
-					const url = item.thumbnail || item.url;
-					if (url) imgEl.src = url;
-				}).catch(()=>{});
-			} catch {}
-		}
 	els.exportJsonBtn.addEventListener('click', () => {
 		const data = {};
 		Object.keys(localStorage).forEach(k => {
