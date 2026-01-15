@@ -263,6 +263,8 @@ function renderSessao(){
   const entry = getEntry(id, week);
   const cargaCsv = sanitize(ex[`Carga_S${week}`]);
   const repsCsv = sanitize(ex[`Reps_S${week}`]);
+  const progress = document.createElement('div'); progress.className = 'meta';
+  progress.textContent = `Exercício ${state.session.index + 1} de ${state.session.list.length}`;
   const card = document.createElement('div'); card.className = 'card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
 
@@ -318,14 +320,19 @@ function renderSessao(){
   const repsEl = document.createElement('input'); repsEl.type = 'text'; repsEl.placeholder = repsCsv || 'ex: 6-8'; repsEl.value = entry.reps || '';
   repsEl.addEventListener('change', ()=> setEntry(id, week, 'reps', repsEl.value)); inputs.appendChild(repsEl);
   card.appendChild(inputs);
-  els.sessionBody.appendChild(card);
+  const wrap = document.createElement('div');
+  wrap.appendChild(progress);
+  wrap.appendChild(card);
+  // Garante somente um card por vez (sem empilhamento)
+  els.sessionBody.replaceChildren(wrap);
 
   els.sessionComplete.onclick = () => {
     setEntry(id, week, 'done', '1');
     markPRIfAny(id, week, cargaEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
-    // Avanço ocorrerá no término do timer, se preferência ativa
+    // Avança imediatamente para o próximo exercício (sem empilhamento)
+    if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
   };
 }
 
