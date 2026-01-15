@@ -36,3 +36,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .chart-row { display: grid; grid-template-columns: 32px 1fr 32px; gap: 8px; align-items: center; }
 .chart-bar-wrap { background: #0f1515; border: 1px solid var(--border); border-radius: 10px; height: 16px; }
 .chart-bar { background: var(--accent); height: 100%; border-radius: 10px; }
+/* Sessão progress */
+.session-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.progress { flex: 1; height: 6px; background: #0f1515; border: 1px solid var(--border); border-radius: 10px; min-width: 120px; }
+.progress > span { display: block; height: 100%; background: var(--accent); border-radius: 10px; width: 0%; }

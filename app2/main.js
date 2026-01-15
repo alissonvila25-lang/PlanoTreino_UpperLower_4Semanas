@@ -23,6 +23,7 @@ const els = {
   sessionEnd: document.getElementById('session-end'),
   sessionComplete: document.getElementById('session-complete'),
   sessionBody: document.getElementById('session-body'),
+  sessionProgress: document.getElementById('session-progress'),
   timerPanel: document.querySelector('.timer-panel'),
   timerDisplay: document.querySelector('.timer-display'),
   timerToggle: document.getElementById('timer-toggle'),
@@ -253,6 +254,11 @@ function renderSessao(){
   els.sessionNext.disabled = state.session.index >= (state.session.list.length - 1);
   els.sessionComplete.disabled = false;
   els.sessionComplete.textContent = 'Concluir e Pausar';
+  if (els.sessionProgress) {
+    const total = state.session.list.length;
+    const current = Math.min(state.session.index + 1, total);
+    els.sessionProgress.textContent = `Exercício ${current} de ${total}`;
+  }
   if (!state.session.list || !state.session.list.length){
     els.sessionBody.innerHTML = '<div class="card">Nenhum exercício disponível para o dia selecionado.</div>';
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true; return;
@@ -267,6 +273,19 @@ function renderSessao(){
   progress.textContent = `Exercício ${state.session.index + 1} de ${state.session.list.length}`;
   const card = document.createElement('div'); card.className = 'card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
+  // Imagem do exercício, se disponível
+  try {
+    const slug = slugify(ex.Exercicio);
+    const img = document.createElement('img');
+    img.alt = slug;
+    img.style.width = '100%';
+    img.style.borderRadius = '8px';
+    const webp = `../images/${slug}.webp`;
+    const png = `../images/${slug}.png`;
+    img.src = webp;
+    img.onerror = () => { img.src = png; img.onerror = () => { img.src = '../images/placeholder.svg'; }; };
+    card.appendChild(img);
+  } catch {}
 
   // Meta badges
   const meta = document.createElement('div'); meta.className = 'meta';
@@ -331,8 +350,8 @@ function renderSessao(){
     markPRIfAny(id, week, cargaEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
-    // Avança imediatamente para o próximo exercício (sem empilhamento)
-    if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
+    // Evita cliques repetidos até avançar (auto-avança no fim do timer se habilitado)
+    els.sessionComplete.disabled = true;
   };
 }
 
