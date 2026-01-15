@@ -11,6 +11,8 @@
   <header class="topbar">
     <h1>Plano Upper/Lower · 4 Semanas</h1>
     <div class="controls">
+      <button id="theme-toggle" class="chip">Tema</button>
+      <button id="header-timer" class="chip">Timer</button>
       <label>Semana
         <select id="week-select">
           <option value="1">1</option>
@@ -47,11 +49,12 @@
       <div class="session-bar">
         <span id="session-day"></span>
         <span id="session-week"></span>
+        <label><input id="session-auto-advance" type="checkbox" /> Avançar automaticamente</label>
         <button id="session-start" class="btn">Iniciar sessão</button>
         <button id="session-prev" class="btn" disabled>Anterior</button>
         <button id="session-next" class="btn" disabled>Próximo</button>
         <button id="session-end" class="btn" disabled>Encerrar</button>
-        <button id="session-complete" class="btn" disabled>Concluir exercício</button>
+        <button id="session-complete" class="btn" disabled>Concluir e Pausar</button>
       </div>
       <div id="session-body"></div>
     </section>
