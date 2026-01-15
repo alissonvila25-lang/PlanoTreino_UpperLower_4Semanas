@@ -41,10 +41,13 @@ function showUpdateBanner(message, actionLabel, onClick) {
 	} catch (e) { console.error(e); }
 }
 
-if ('serviceWorker' in navigator) {
+// Respeita ?no-sw=1 e aplica cache-busting na URL do SW
+const __params = new URLSearchParams(window.location.search);
+const __skipSW = __params.has('no-sw');
+if ('serviceWorker' in navigator && !__skipSW) {
 	window.addEventListener('load', async () => {
 		try {
-			const reg = await navigator.serviceWorker.register(`./sw.v30.js`);
+			const reg = await navigator.serviceWorker.register('./sw.v30.js?v=30');
 
 			// Recarrega automaticamente quando o novo SW assumir controle
 			let refreshing = false;
