@@ -1,0 +1,33 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #0b1212; --text: #e7ecef; --muted: #93a1a1; --card: #121a1a; --border: #203030;
+  --accent: #0f766e; --danger: #b91c1c;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif; }
+.topbar { padding: 12px; border-bottom: 1px solid var(--border); display: grid; gap: 8px; }
+.topbar h1 { margin: 0; font-size: 18px; }
+.controls { display: flex; gap: 12px; align-items: center; }
+.tabs { display: flex; gap: 8px; }
+.tab-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.tab-btn.is-active { background: var(--accent); border-color: var(--accent); }
+main { padding: 16px; max-width: 960px; margin: 0 auto; }
+.tab { display: none; }
+.tab.is-active { display: block; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 10px 0; }
+.ex-header { display: flex; gap: 10px; align-items: center; }
+.ex-title h3 { margin: 0; font-size: 16px; }
+.meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.inputs { display: grid; gap: 10px; margin-top: 8px; }
+.input label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.input input, .input textarea { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: #0f1515; color: var(--text); }
+.actions { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+.btn { background: #0f1515; border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn-danger { background: #1a0f0f; border-color: #4a1f1f; color: #ffdede; }
+.timer { position: fixed; right: 16px; bottom: 16px; }
+.timer-panel { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 10px; }
+.timer-display { font-size: 20px; margin-bottom: 8px; }
+.chart { display: grid; gap: 10px; }
+.chart-row { display: grid; grid-template-columns: 32px 1fr 32px; gap: 8px; align-items: center; }
+.chart-bar-wrap { background: #0f1515; border: 1px solid var(--border); border-radius: 10px; height: 16px; }
+.chart-bar { background: var(--accent); height: 100%; border-radius: 10px; }
