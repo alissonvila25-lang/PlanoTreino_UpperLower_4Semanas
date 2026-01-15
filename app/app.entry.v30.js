@@ -27,7 +27,8 @@ const APP_VERSION = 'v30';
   const injectApp = () => {
     try {
       const s = document.createElement('script');
-      s.src = './app.js';
+      // Cache-bust to ensure latest app.js when SW cached older version
+      s.src = './app.js?v=30';
       s.defer = true;
       document.body.appendChild(s);
     } catch (e) { console.error(e); }
