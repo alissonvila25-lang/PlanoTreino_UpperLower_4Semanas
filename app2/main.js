@@ -347,10 +347,10 @@ function renderSessao(){
   card.appendChild(inputs);
 
   // Controles de navegação dentro do card
-  const actionsCard = document.createElement('div'); actionsCard.className = 'actions';
-  const btnPrev = document.createElement('button'); btnPrev.className = 'btn'; btnPrev.textContent = 'Anterior'; btnPrev.disabled = state.session.index <= 0;
+  const actionsCard = document.createElement('div'); actionsCard.className = 'actions session-controls';
+  const btnPrev = document.createElement('button'); btnPrev.className = 'btn btn-prev'; btnPrev.textContent = 'Anterior'; btnPrev.disabled = state.session.index <= 0;
   btnPrev.addEventListener('click', () => { if (state.session.index > 0) { state.session.index--; renderSessao(); } });
-  const btnComplete = document.createElement('button'); btnComplete.className = 'btn'; btnComplete.textContent = 'Concluir e Pausar';
+  const btnComplete = document.createElement('button'); btnComplete.className = 'btn btn-complete'; btnComplete.textContent = 'Concluir e Pausar';
   btnComplete.addEventListener('click', () => {
     setEntry(id, week, 'done', '1');
     markPRIfAny(id, week, cargaEl.value);
@@ -358,7 +358,7 @@ function renderSessao(){
     setSeconds(s); start(); els.timerPanel.hidden = false;
     if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
   });
-  const btnNext = document.createElement('button'); btnNext.className = 'btn'; btnNext.textContent = 'Próximo'; btnNext.disabled = state.session.index >= (state.session.list.length - 1);
+  const btnNext = document.createElement('button'); btnNext.className = 'btn btn-next'; btnNext.textContent = 'Próximo'; btnNext.disabled = state.session.index >= (state.session.list.length - 1);
   btnNext.addEventListener('click', () => { if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); } });
   actionsCard.appendChild(btnPrev);
   actionsCard.appendChild(btnComplete);
