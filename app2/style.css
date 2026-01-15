@@ -37,6 +37,9 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-controls .btn-prev { justify-self: start; }
 .session-controls .btn-complete { justify-self: center; background: var(--accent); border-color: var(--accent); color: #fff; }
 .session-controls .btn-next { justify-self: end; }
+.session-controls .btn { font-weight: 600; }
+.session-controls .btn-prev, .session-controls .btn-next { min-width: 120px; }
+.session-controls .btn-complete { min-width: 180px; }
 .timer { position: fixed; right: 16px; bottom: 16px; }
 .timer-panel { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 10px; }
 .timer-display { font-size: 20px; margin-bottom: 8px; }
@@ -48,3 +51,9 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .progress { flex: 1; height: 8px; background: #0f1515; border: 1px solid var(--border); border-radius: 10px; min-width: 120px; margin-bottom: 12px; }
 .progress > span { display: block; height: 100%; background: var(--accent); border-radius: 10px; width: 0%; }
+/* Sessão card width */
+.session-card { max-width: 720px; margin: 0 auto; }
+/* Spacing between meta and controls in Session */
+.session-card .meta { margin-bottom: 8px; }
+/* Compact input heights for Session */
+.session-card .inputs-compact .input input { height: 34px; }

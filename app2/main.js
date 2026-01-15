@@ -286,7 +286,7 @@ function renderSessao(){
   const fill = document.createElement('span');
   fill.style.width = `${Math.round(((state.session.index + 1)/state.session.list.length)*100)}%`;
   bar.appendChild(fill);
-  const card = document.createElement('div'); card.className = 'card';
+  const card = document.createElement('div'); card.className = 'card session-card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
   // Imagem removida para evitar distração e bugs; podemos reativar depois
 
