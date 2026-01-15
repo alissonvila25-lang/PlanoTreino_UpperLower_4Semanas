@@ -350,8 +350,8 @@ function renderSessao(){
     markPRIfAny(id, week, cargaEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
-    // Evita cliques repetidos até avançar (auto-avança no fim do timer se habilitado)
-    els.sessionComplete.disabled = true;
+    // Avança imediatamente e evita empilhamento
+    if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
   };
 }
 
