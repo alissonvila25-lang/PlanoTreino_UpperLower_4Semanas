@@ -15,6 +15,8 @@ const els = {
   exerciseList: document.getElementById('exercise-list'),
   techList: document.getElementById('tech-list'),
   summary: document.getElementById('summary'),
+  summaryImport: document.getElementById('summary-import'),
+  summaryExport: document.getElementById('summary-export'),
   sessionDay: document.getElementById('session-day'),
   sessionWeek: document.getElementById('session-week'),
   sessionStart: document.getElementById('session-start'),
@@ -60,6 +62,27 @@ function getEntry(id, week){
   };
 }
 function setEntry(id, week, field, value){ localStorage.setItem(keyFor(id,week,field), value); }
+function listAllStateKeys(){ const keys = []; for (let i=0; i<localStorage.length; i++){ const k = localStorage.key(i); if (k && k.startsWith('app2:')) keys.push(k); } return keys; }
+function exportData(){
+  const data = { version: 1, exportedAt: new Date().toISOString(), entries: {} };
+  for (const k of listAllStateKeys()) data.entries[k] = localStorage.getItem(k);
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'app2-dados.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function importDataFromFile(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      if (!obj || typeof obj !== 'object' || !obj.entries) throw new Error('Formato inválido');
+      Object.entries(obj.entries).forEach(([k,v])=>{ if (String(k).startsWith('app2:')) localStorage.setItem(k, String(v)); });
+      alert('Dados importados com sucesso.');
+      render();
+    } catch (e){ alert('Falha ao importar: ' + e.message); }
+  };
+  reader.readAsText(file);
+}
 
 function sanitize(s){ return s == null ? '' : String(s); }
 function slugify(text){ return sanitize(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
@@ -131,6 +154,12 @@ if (els.themeToggle) els.themeToggle.addEventListener('click', ()=>{ applyTheme(
 // Auto-avançar preferência
 function applyAutoAdvance(val){ state.autoAdvance = !!val; localStorage.setItem('app2:autoAdvance', state.autoAdvance ? '1' : '0'); if (els.sessionAutoAdvance) els.sessionAutoAdvance.checked = state.autoAdvance; }
 if (els.sessionAutoAdvance) els.sessionAutoAdvance.addEventListener('change', (e)=> applyAutoAdvance(e.target.checked));
+if (els.summaryExport) els.summaryExport.addEventListener('click', exportData);
+if (els.summaryImport) els.summaryImport.addEventListener('click', ()=>{
+  const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json';
+  input.addEventListener('change', ()=>{ if (input.files && input.files[0]) importDataFromFile(input.files[0]); });
+  input.click();
+});
 
 // Renderers
 function renderTreino(){
