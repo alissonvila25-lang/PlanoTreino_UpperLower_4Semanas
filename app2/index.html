@@ -81,6 +81,13 @@
     </section>
   </main>
 
-  <script defer src="./main.js"></script>
+  <script>
+    (function(){
+      var s = document.createElement('script');
+      s.defer = true;
+      s.src = './main.js?cb=' + Date.now();
+      document.body.appendChild(s);
+    })();
+  </script>
 </body>
 </html>
