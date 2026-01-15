@@ -10,7 +10,7 @@ const APP_VERSION = 'v30';
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
       try {
-        const reg = await navigator.serviceWorker.register('./sw.v30.js');
+        const reg = await navigator.serviceWorker.register('./sw.v30.js?v=30');
         // auto-reload when new SW takes control
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
