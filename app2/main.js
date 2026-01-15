@@ -70,11 +70,19 @@ async function loadCSVs(){
   const techText = await fetchCsv(['../tecnicas.csv','./tecnicas.csv','/tecnicas.csv']);
   const plan = Papa.parse(planText, { header: true, skipEmptyLines: true }).data;
   const techniques = Papa.parse(techText, { header: true, skipEmptyLines: true }).data;
-  state.plan = plan.map(r => ({
-    ...r,
-    _id: `${sanitize(r.Dia)}|${sanitize(r.Exercicio)}`
-  }));
-  state.techniques = techniques.map(t => ({ ...t }));
+  state.plan = plan
+    .filter(r => sanitize(r.Dia) && sanitize(r.Exercicio))
+    .map(r => ({
+      ...r,
+      _id: `${sanitize(r.Dia)}|${sanitize(r.Exercicio)}`
+    }));
+  // Filtra apenas técnicas válidas (GERxx com Nome/Como executar)
+  state.techniques = techniques.filter(t => {
+    const ger = sanitize(t.GER);
+    const nome = sanitize(t.Nome);
+    const como = sanitize(t["Como executar"]);
+    return /^GER\d+$/i.test(ger) && nome && como;
+  }).map(t => ({ ...t }));
 }
 
 // Timer
@@ -119,6 +127,62 @@ function renderTreino(){
     `;
     card.appendChild(meta);
 
+    // Stage controls: Aquecimento (primeiro do grupo) e Preparatórias
+    try {
+      const group = sanitize(ex.Grupo);
+      const { warmupTarget, prepMin, prepMax } = parseSeriesMeta(ex.SeriesBase);
+      const stage = document.createElement('div'); stage.className = 'stage';
+      // Aquecimento no primeiro exercício do grupo
+      if (warmupTarget > 0 && isFirstExerciseOfGroup(group, ex, list)) {
+        const done = getWarmupCount(week, state.day, group);
+        const row = document.createElement('div'); row.className = 'stage-row';
+        const hint = document.createElement('span'); hint.className = 'hint';
+        hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`;
+        row.appendChild(hint);
+        const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
+        btn.addEventListener('click', ()=>{
+          const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget);
+          setWarmupCount(week, state.day, group, n);
+          const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
+          setSeconds(s); start(); els.timerPanel.hidden = false;
+          hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true;
+        });
+        row.appendChild(btn);
+        const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
+        reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
+        row.appendChild(reset);
+        stage.appendChild(row);
+      }
+      // Preparatórias por exercício
+      if (prepMax > 0) {
+        const doneP = getPrepCount(week, ex._id);
+        const rowP = document.createElement('div'); rowP.className = 'stage-row';
+        const hintP = document.createElement('span'); hintP.className = 'hint';
+        const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
+        hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`;
+        rowP.appendChild(hintP);
+        const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
+        btnDone.addEventListener('click', ()=>{
+          const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax);
+          setPrepCount(week, ex._id, n);
+          const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
+          setSeconds(s); start(); els.timerPanel.hidden = false;
+          hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true;
+        });
+        rowP.appendChild(btnDone);
+        const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
+        btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; });
+        rowP.appendChild(btnReset);
+        if (prepMin > 0 && doneP < prepMin) {
+          const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
+          btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
+          rowP.appendChild(btnSkip);
+        }
+        stage.appendChild(rowP);
+      }
+      if (stage.childElementCount) card.appendChild(stage);
+    } catch(e){ console.error(e); }
+
     const inputs = document.createElement('div'); inputs.className = 'inputs';
     const inputCarga = document.createElement('div'); inputCarga.className = 'input'; inputCarga.innerHTML = `<label>Carga S${week}</label>`;
     const cargaEl = document.createElement('input'); cargaEl.type = 'text'; cargaEl.placeholder = cargaCsv || 'ex: 40kg'; cargaEl.value = entry.carga || '';
@@ -155,35 +219,53 @@ function renderTecnicas(){
   if (!state.techniques || !state.techniques.length){ els.techList.innerHTML = '<div class="card">Técnicas não carregadas.</div>'; return; }
   for (const t of state.techniques){
     const card = document.createElement('div'); card.className = 'card';
-    const h3 = document.createElement('h3'); h3.textContent = `${sanitize(t.GER||'')} · ${sanitize(t.Nome||'')}`; card.appendChild(h3);
-    const meta = document.createElement('div'); meta.className = 'meta'; meta.innerHTML = `<span>${sanitize(t["Como executar"]||'')}</span>`; card.appendChild(meta);
-    const note = document.createElement('div'); note.className = 'note'; note.innerHTML = `<strong>Descanso:</strong> ${sanitize(t.Descanso||'')} • <strong>Progresso:</strong> ${sanitize(t.Progresso||'')}`; card.appendChild(note);
+    const h3 = document.createElement('h3'); h3.textContent = `${sanitize(t.GER)} · ${sanitize(t.Nome)}`; card.appendChild(h3);
+    const meta = document.createElement('div'); meta.className = 'meta'; meta.innerHTML = `<span>${sanitize(t["Como executar"])}</span>`; card.appendChild(meta);
+    const note = document.createElement('div'); note.className = 'note'; note.innerHTML = `<strong>Descanso:</strong> ${sanitize(t.Descanso)} • <strong>Progresso:</strong> ${sanitize(t.Progresso)}`; card.appendChild(note);
     els.techList.appendChild(card);
   }
 }
 
+function parseLoad(s){ if(!s) return null; const m = String(s).match(/([0-9]+(?:\.[0-9]+)?)(\s*(kg|lb))?/i); if(!m) return null; return { value: parseFloat(m[1]), unit: (m[3]||'').toLowerCase() }; }
+function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
+function bestPreviousLoad(exId, uptoWeek){ let best = null; for(let w=1; w<uptoWeek; w++){ const e = getEntry(exId, w); const p = parseLoad(e.carga); if(p){ if(!best || p.value > best.value) best = p; } } return best; }
+function markPRIfAny(exId, week, cargaStr){ const now = parseLoad(cargaStr); if(!now) return false; const best = bestPreviousLoad(exId, week); const key = keyFor(exId, week, 'pr'); if(!best || now.value > best.value){ localStorage.setItem(key, '1'); return true; } else { localStorage.removeItem(key); return false; } }
+function hasPR(exId, week){ return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
+
 function renderResumo(){
   const week = Number(state.week);
   els.summary.innerHTML = '';
+  // PR chart
+  const prCounts = [0,0,0,0];
+  for (const ex of state.plan){ for(let w=1; w<=4; w++){ if (hasPR(ex._id, w)) prCounts[w-1]++; } }
+  const maxPr = Math.max(1, ...prCounts);
+  const chartCard = document.createElement('div'); chartCard.className = 'card';
+  const h3c = document.createElement('h3'); h3c.textContent = 'PRs por semana'; chartCard.appendChild(h3c);
+  const chart = document.createElement('div'); chart.className = 'chart';
+  prCounts.forEach((cnt,i)=>{
+    const row = document.createElement('div'); row.className = 'chart-row';
+    const label = document.createElement('div'); label.className = 'chart-label'; label.textContent = `S${i+1}`; row.appendChild(label);
+    const barWrap = document.createElement('div'); barWrap.className = 'chart-bar-wrap';
+    const bar = document.createElement('div'); bar.className = 'chart-bar'; bar.style.width = `${Math.round((cnt/maxPr)*100)}%`; barWrap.appendChild(bar); row.appendChild(barWrap);
+    const value = document.createElement('div'); value.className = 'chart-value'; value.textContent = String(cnt); row.appendChild(value);
+    chart.appendChild(row);
+  });
+  if (prCounts.every(c => c === 0)){ const msg = document.createElement('div'); msg.className = 'note'; msg.textContent = 'Sem PRs registrados ainda.'; chartCard.appendChild(msg); }
+  chartCard.appendChild(chart);
+  els.summary.appendChild(chartCard);
+
   const byDay = {};
-  for (const ex of state.plan){
-    const id = ex._id; const day = sanitize(ex.Dia);
-    const e = getEntry(id, week);
-    if (!byDay[day]) byDay[day] = [];
-    if (e.carga || e.reps || e.done || e.nota){ byDay[day].push({ ex, e }); }
-  }
+  for (const ex of state.plan){ const id = ex._id; const day = sanitize(ex.Dia); const e = getEntry(id, week); if (!byDay[day]) byDay[day] = []; if (e.carga || e.reps || e.done || e.nota){ byDay[day].push({ ex, e }); } }
   Object.keys(byDay).forEach(day => {
     const section = document.createElement('div'); section.className = 'card';
     const h3 = document.createElement('h3'); h3.textContent = day; section.appendChild(h3);
     for (const { ex, e } of byDay[day]){
-      const p = document.createElement('div'); p.className = 'meta';
-      p.innerHTML = `
+      const p = document.createElement('div'); p.className = 'meta'; p.innerHTML = `
         <span>${sanitize(ex.Exercicio)}</span>
         <span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>
         <span>${e.done ? 'Concluído' : 'Pendente'}</span>
         ${e.nota ? `<span>Obs: ${sanitize(e.nota)}</span>` : ''}
-      `;
-      section.appendChild(p);
+      `; section.appendChild(p);
     }
     els.summary.appendChild(section);
   });
@@ -214,6 +296,44 @@ function renderSessao(){
   const repsCsv = sanitize(ex[`Reps_S${week}`]);
   const card = document.createElement('div'); card.className = 'card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
+
+  // Stage controls
+  try {
+    const group = sanitize(ex.Grupo);
+    const { warmupTarget, prepMin, prepMax } = parseSeriesMeta(ex.SeriesBase);
+    const stage = document.createElement('div'); stage.className = 'stage';
+    if (warmupTarget > 0 && isFirstExerciseOfGroup(group, ex, state.session.list)) {
+      const done = getWarmupCount(week, state.day, group);
+      const row = document.createElement('div'); row.className = 'stage-row';
+      const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`; row.appendChild(hint);
+      const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
+      btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; });
+      row.appendChild(btn);
+      const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
+      reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
+      row.appendChild(reset);
+      stage.appendChild(row);
+    }
+    if (prepMax > 0) {
+      const doneP = getPrepCount(week, ex._id);
+      const rowP = document.createElement('div'); rowP.className = 'stage-row';
+      const hintP = document.createElement('span'); hintP.className = 'hint';
+      const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
+      hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`; rowP.appendChild(hintP);
+      const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
+      btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; });
+      rowP.appendChild(btnDone);
+      const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
+      btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; }); rowP.appendChild(btnReset);
+      if (prepMin > 0 && doneP < prepMin) {
+        const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
+        btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
+        rowP.appendChild(btnSkip);
+      }
+      stage.appendChild(rowP);
+    }
+    if (stage.childElementCount) card.appendChild(stage);
+  } catch(e){ console.error(e); }
   const inputs = document.createElement('div'); inputs.className = 'inputs';
   const cargaEl = document.createElement('input'); cargaEl.type = 'text'; cargaEl.placeholder = cargaCsv || 'ex: 40kg'; cargaEl.value = entry.carga || '';
   cargaEl.addEventListener('change', ()=> setEntry(id, week, 'carga', cargaEl.value)); inputs.appendChild(cargaEl);
@@ -224,6 +344,7 @@ function renderSessao(){
 
   els.sessionComplete.onclick = () => {
     setEntry(id, week, 'done', '1');
+    markPRIfAny(id, week, cargaEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
     if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
@@ -264,3 +385,24 @@ function render(){
     els.exerciseList.innerHTML = '<div class="card">Falha ao carregar CSVs.</div>';
   }
 })();
+
+// Helpers: aquecimento/prep + parsing
+function parseSeriesMeta(seriesBase){
+  const txt = sanitize(seriesBase||'');
+  let warmupTarget = 0; let prepMin = 0, prepMax = 0;
+  const mAq = txt.match(/Aquec\s*:?\s*(\d+)/i);
+  if (mAq) warmupTarget = parseInt(mAq[1],10)||0;
+  const mPrepRange = txt.match(/Prep\s*:?\s*(\d+)\s*[-–]\s*(\d+)/i);
+  const mPrepX = txt.match(/Prep\s*:?\s*(\d+)\s*[x×]/i);
+  if (mPrepRange){ prepMin = parseInt(mPrepRange[1],10)||0; prepMax = parseInt(mPrepRange[2],10)||prepMin; }
+  else if (mPrepX){ prepMin = parseInt(mPrepX[1],10)||0; prepMax = prepMin; }
+  if (/Prep/i.test(txt) && (prepMin===0 && prepMax===0)) { prepMin = 2; prepMax = 3; }
+  return { warmupTarget, prepMin, prepMax };
+}
+function warmupKey(week, day, group){ return `app2:warmup:S${week}:${day}:${group}`; }
+function getWarmupCount(week, day, group){ return parseInt(localStorage.getItem(warmupKey(week,day,group))||'0',10)||0; }
+function setWarmupCount(week, day, group, n){ localStorage.setItem(warmupKey(week,day,group), String(n)); }
+function prepKey(week, exId){ return `app2:prep:S${week}:${exId}`; }
+function getPrepCount(week, exId){ return parseInt(localStorage.getItem(prepKey(week,exId))||'0',10)||0; }
+function setPrepCount(week, exId, n){ localStorage.setItem(prepKey(week,exId), String(n)); }
+function isFirstExerciseOfGroup(group, ex, list){ const firstIdx = list.findIndex(e => sanitize(e.Grupo) === group); const idx = list.findIndex(e => e._id === ex._id); return firstIdx !== -1 && idx === firstIdx; }
