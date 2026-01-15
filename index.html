@@ -1,88 +1,23 @@
 <!doctype html>
 <html lang="pt-br">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0f766e" />
-    <title>Plano Upper/Lower · 4 Semanas</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512.png" />
-    <link rel="stylesheet" href="./style.css" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  </head>
-  <body>
-    <header class="app-header">
-      <div class="title">
-        <h1>Plano Upper/Lower</h1>
-        <span class="subtitle">4 semanas</span>
-        <span id="version-label" class="subtitle" aria-label="Versão do app" style="margin-left:8px;"></span>
-      </div>
-      <div class="selectors">
-        <button id="theme-toggle" class="tab-btn" title="Alternar tema" aria-label="Alternar tema">Tema</button>
-        <button id="timer-toggle" class="tab-btn" title="Mostrar/ocultar temporizador" aria-label="Mostrar/ocultar temporizador">Timer</button>
-        <button id="qr-btn" class="tab-btn" title="Mostrar QR de acesso" aria-label="Mostrar QR de acesso">QR</button>
-        <button id="install-btn" class="tab-btn" hidden title="Instalar aplicativo" aria-label="Instalar aplicativo">Instalar</button>
-        <label>
-          Semana
-          <select id="week-select" aria-label="Selecionar semana">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </label>
-        <label>
-          Dia
-          <select id="day-select" aria-label="Selecionar dia">
-            <option value="Segunda">Segunda</option>
-            <option value="Terça">Terça</option>
-            <option value="Quinta">Quinta</option>
-            <option value="Sábado">Sábado</option>
-          </select>
-        </label>
-      </div>
-    </header>
-
-    <nav class="tabs">
-      <button class="tab-btn is-active" data-tab="treino">Treino</button>
-      <button class="tab-btn" data-tab="tecnicas">Técnicas</button>
-      <button class="tab-btn" data-tab="resumo">Resumo</button>
-      <button class="tab-btn" data-tab="sessao">Sessão</button>
-    </nav>
-
-    <main>
-      <section id="timer" class="timer-panel" hidden>
-        <div class="timer-display" aria-live="polite" aria-atomic="true">00:00</div>
-        <div class="timer-controls">
-          <button id="timer-start" class="btn">Iniciar</button>
-          <button id="timer-pause" class="btn">Pausar</button>
-          <button id="timer-reset" class="btn btn-danger">Resetar</button>
-          <div class="timer-presets">
-            <button data-seconds="120" class="btn">2:00</button>
-            <button data-seconds="20" class="btn">20s</button>
-            <button data-seconds="10" class="btn">10s</button>
-          </div>
-        </div>
-      </section>
-      <section id="tab-treino" class="tab is-active">
-        <div id="exercise-list" class="list"></div>
-      </section>
-
-      <section id="tab-tecnicas" class="tab">
-        <div id="tech-list" class="list"></div>
-      </section>
-
-      <section id="tab-resumo" class="tab">
-        <div class="summary-controls">
-          <button id="export-data" class="btn">Exportar progresso (CSV)</button>
-          <button id="export-json" class="btn">Exportar dados (JSON)</button>
-          <button id="import-json" class="btn">Importar dados (JSON)</button>
-          <input id="import-json-input" type="file" accept="application/json" hidden />
-          <button id="export-slugs" class="btn">Exportar slugs de imagens</button>
-          <label>
-            Filtro Semana
+  <!doctype html>
+  <html lang="pt-br">
+    <head>
+      <meta charset="utf-8" />
+      <meta http-equiv="refresh" content="0; url=./app/" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Redirecionando…</title>
+      <link rel="canonical" href="./app/" />
+      <script>
+        (function(){
+          try { window.location.replace('./app/'); } catch(e) { window.location.href = './app/'; }
+        })();
+      </script>
+    </head>
+    <body>
+      Redirecionando para <a href="./app/">/app/</a>…
+    </body>
+    </html>
             <select id="export-week-filter" aria-label="Filtrar semana para exportação">
               <option value="">Todas</option>
               <option value="1">1</option>
