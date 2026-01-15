@@ -1,10 +1,5 @@
-﻿GER,Nome,Como executar,Descanso,Progresso
-GER10,Backoff,Reduza a carga e faça até a falha,2:00,Progrida carga quando conseguir X
-Name,Description
-Agachamento,Agachamento com barra apoiada nos trapézios
-Supino,Supino reto com barra
-Levantamento Terra,Levantamento terra convencional
-Remada Curvada,Remada com barra inclinado
+GER,Nome,Como executar
+GER10,Backoff,Reduza e faça até a falha
 GER,Nome,Como executar,Descanso,Progresso
 "GER10","Backoff set","Após 1x4-8 de trabalho, reduza 20/30% da carga e faça 1 série até a falha técnica.","2:00 entre séries; backoff contínuo","Iguale ou supere as reps do último backoff mantendo técnica."
 "GER11","Muscle round","Carga para ~12 reps. Faça blocos de 4 reps com 10s entre blocos. Busque falhar no 4º bloco. Ao consolidar 5 blocos, aumente a carga para voltar a falhar no 4º.","10s entre blocos","Aumente carga quando completar 5 blocos sólidos."

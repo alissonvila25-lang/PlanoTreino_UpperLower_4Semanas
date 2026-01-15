@@ -1,15 +1,6 @@
-﻿Dia,Grupo,Exercicio,GER,Protocolo,SeriesBase,Pausa,Notas
-Segunda,Upper,Supino inclinado (máquina),GER10,Backoff,1x4-8,2:00,
-Segunda,Upper,Remada cavalinho (máquina),GER10,Backoff,1x4-8,2:00,
-Terça,Lower,Agachamento (smith),GER10,Backoff,1x4-8,2:00,
-Day,Exercise,Sets,Reps
-Dia 1,Agachamento,3,8-10
-Dia 1,Supino,3,6-8
-Dia 2,Levantamento Terra,3,5
-Dia 2,Remada Curvada,3,6-8
-Dia 3,Descanse,0,0
-Dia 4,Agachamento Frontal,3,8
-Dia 4,Puxada na Barra,3,6-8
+Dia,Grupo,Exercicio,GER,Protocolo,SeriesBase,Pausa
+Segunda,Upper,Supino inclinado (máquina),GER10,Backoff,1x4-8,2:00
+Terça,Lower,Agachamento (smith),GER10,Backoff,1x4-8,2:00
 Dia,Grupo,Exercicio,GER,Protocolo,SeriesBase,Pausa,Notas,Carga_S1,Reps_S1,Carga_S2,Reps_S2,Carga_S3,Reps_S3,Carga_S4,Reps_S4
 "Segunda","Upper","Supino inclinado (máquina)","GER10","Backoff set (20/30% após 1x4-8)","Aquec:2x15 | Prep:3x4-8(2RIR) | Trabalho:1x4-8 + Backoff","2:00","Iguale/supere reps do backoff anterior; técnica perfeita.",,,,,,,,
 "Segunda","Upper","Supino reto (smith)","GER10","Backoff set (20/30% após 1x4-8)","Aquec:2x15 | Prep:3x4-8(2RIR) | Trabalho:1x4-8 + Backoff","2:00","Controle na descida; pausa leve no peito opcional.",,,,,,,,

@@ -1,0 +1,24 @@
+name: Deploy app to gh-pages branch
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure .nojekyll in app
+        run: |
+          touch app/.nojekyll
+
+      - name: Publish app/ to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: app
+          force_orphan: true

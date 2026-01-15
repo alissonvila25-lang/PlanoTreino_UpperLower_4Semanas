@@ -1,3 +1,8 @@
+const CACHE_NAME='plano-ul-4s-v30';
+const ASSETS=['./index.html','./app.js','./app.entry.v30.js','./plano-4-semanas.csv','./tecnicas.csv','./style.css','./manifest.webmanifest'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});
 const CACHE_NAME = 'plano-ul-4s-v30';
 const ASSETS = [
   './index.html',
@@ -18,12 +23,7 @@ self.addEventListener('activate', (event) => {
   );
   self.clients.claim();
 });
-self.addEventListener('message', (event) => {
-  if (event && event.data && event.data.type === 'SKIP_WAITING') {
-    // Permite que a página force a ativação do novo SW
-    self.skipWaiting();
-  }
-});
+
 // Helper para obter URL absoluta de index.html no escopo do SW
 const INDEX_URL = new URL('./index.html', self.registration.scope).href;
 
@@ -31,7 +31,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Navegação HTML: usa network-first com fallback para index.html do cache
+  // Navegação HTML: network-first com fallback para index.html do cache
   const accept = req.headers.get('accept') || '';
   const isNavigate = req.mode === 'navigate' || accept.includes('text/html');
   if (isNavigate) {
@@ -47,13 +47,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets estáticos: se tiver query (?v=...), usa network-first para sempre pegar a versão mais nova; caso contrário, cache-first
+  // Assets estáticos: network-first quando houver query (?v=...), cache-first caso contrário
   const isStatic = /\.(css|js|png|jpg|jpeg|webp|svg|csv|json|webmanifest)$/i.test(url.pathname);
   const hasQuery = Boolean(url.search);
   const normalizedUrl = isStatic ? (url.origin + url.pathname) : null;
 
   if (isStatic && hasQuery) {
-    // Network-first para assets versionados
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.ok) {
@@ -62,14 +61,13 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       }).catch(async () => {
-        // Fallback: versão sem query ou própria requisição
         return (normalizedUrl && await caches.match(normalizedUrl)) || caches.match(req);
       })
     );
     return;
   }
 
-  // Cache-first para demais requisições (inclui imagens sem query e outros estáticos)
+  // Cache-first para demais estáticos
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
