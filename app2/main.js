@@ -72,7 +72,10 @@ async function fetchCsv(paths){
   throw new Error('Falha ao carregar CSV');
 }
 async function loadCSVs(){
-  const planText = await fetchCsv(['../plano-4-semanas.csv','./plano-4-semanas.csv','/plano-4-semanas.csv']);
+  let planTextFull = await fetchCsv(['../plano-4-semanas.csv','./plano-4-semanas.csv','/plano-4-semanas.csv']);
+  // Usa apenas o bloco detalhado (com Carga_S1...) para evitar linhas antigas/duplicadas
+  const idxCarga = planTextFull.indexOf('Carga_S1');
+  const planText = idxCarga > -1 ? planTextFull.slice(planTextFull.lastIndexOf('\n', idxCarga) + 1) : planTextFull;
   const techText = await fetchCsv(['../tecnicas.csv','./tecnicas.csv','/tecnicas.csv']);
   const planRaw = Papa.parse(planText, { header: true, skipEmptyLines: true }).data;
   const plan = planRaw.map((r, i) => ({ ...r, _row: i }));
@@ -277,19 +280,7 @@ function renderSessao(){
   progress.textContent = `Exercício ${state.session.index + 1} de ${state.session.list.length}`;
   const card = document.createElement('div'); card.className = 'card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
-  // Imagem do exercício, se disponível
-  try {
-    const slug = slugify(ex.Exercicio);
-    const img = document.createElement('img');
-    img.alt = slug;
-    img.style.width = '100%';
-    img.style.borderRadius = '8px';
-    const webp = `../images/${slug}.webp`;
-    const png = `../images/${slug}.png`;
-    img.src = webp;
-    img.onerror = () => { img.src = png; img.onerror = () => { img.src = '../images/placeholder.svg'; }; };
-    card.appendChild(img);
-  } catch {}
+  // Imagem removida para evitar distração e bugs; podemos reativar depois
 
   // Meta badges
   const meta = document.createElement('div'); meta.className = 'meta';
@@ -337,11 +328,14 @@ function renderSessao(){
     }
     if (stage.childElementCount) card.appendChild(stage);
   } catch(e){ console.error(e); }
-  const inputs = document.createElement('div'); inputs.className = 'inputs';
+  const inputs = document.createElement('div'); inputs.className = 'inputs inputs-compact';
+  const inputCarga = document.createElement('div'); inputCarga.className = 'input'; inputCarga.innerHTML = `<label>Carga S${week}</label>`;
   const cargaEl = document.createElement('input'); cargaEl.type = 'text'; cargaEl.placeholder = cargaCsv || 'ex: 40kg'; cargaEl.value = entry.carga || '';
-  cargaEl.addEventListener('change', ()=> setEntry(id, week, 'carga', cargaEl.value)); inputs.appendChild(cargaEl);
+  cargaEl.addEventListener('change', ()=> setEntry(id, week, 'carga', cargaEl.value)); inputCarga.appendChild(cargaEl);
+  const inputReps = document.createElement('div'); inputReps.className = 'input'; inputReps.innerHTML = `<label>Reps S${week}</label>`;
   const repsEl = document.createElement('input'); repsEl.type = 'text'; repsEl.placeholder = repsCsv || 'ex: 6-8'; repsEl.value = entry.reps || '';
-  repsEl.addEventListener('change', ()=> setEntry(id, week, 'reps', repsEl.value)); inputs.appendChild(repsEl);
+  repsEl.addEventListener('change', ()=> setEntry(id, week, 'reps', repsEl.value)); inputReps.appendChild(repsEl);
+  inputs.appendChild(inputCarga); inputs.appendChild(inputReps);
   card.appendChild(inputs);
 
   // Controles de navegação dentro do card
