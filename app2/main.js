@@ -250,6 +250,10 @@ function renderSessao(){
     els.sessionBody.innerHTML = '<div class="card">Clique em "Iniciar sessão" para começar.</div>';
     els.sessionStart.disabled = false; els.sessionEnd.disabled = true;
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true;
+    // Mostra controles da barra quando não está em sessão
+    els.sessionPrev.style.display = '';
+    els.sessionNext.style.display = '';
+    els.sessionComplete.style.display = '';
     return;
   }
   els.sessionStart.disabled = true; els.sessionEnd.disabled = false;
@@ -278,6 +282,10 @@ function renderSessao(){
   const repsCsv = sanitize(ex[`Reps_S${week}`]);
   const progress = document.createElement('div'); progress.className = 'meta';
   progress.textContent = `Exercício ${state.session.index + 1} de ${state.session.list.length}`;
+  const bar = document.createElement('div'); bar.className = 'progress';
+  const fill = document.createElement('span');
+  fill.style.width = `${Math.round(((state.session.index + 1)/state.session.list.length)*100)}%`;
+  bar.appendChild(fill);
   const card = document.createElement('div'); card.className = 'card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
   // Imagem removida para evitar distração e bugs; podemos reativar depois
@@ -358,6 +366,7 @@ function renderSessao(){
   card.appendChild(actionsCard);
   const wrap = document.createElement('div');
   wrap.appendChild(progress);
+  wrap.appendChild(bar);
   wrap.appendChild(card);
   // Garante somente um card por vez (sem empilhamento)
   els.sessionBody.replaceChildren(wrap);
