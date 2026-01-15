@@ -68,7 +68,8 @@ async function fetchCsv(paths){
 async function loadCSVs(){
   const planText = await fetchCsv(['../plano-4-semanas.csv','./plano-4-semanas.csv','/plano-4-semanas.csv']);
   const techText = await fetchCsv(['../tecnicas.csv','./tecnicas.csv','/tecnicas.csv']);
-  const plan = Papa.parse(planText, { header: true, skipEmptyLines: true }).data;
+  const planRaw = Papa.parse(planText, { header: true, skipEmptyLines: true }).data;
+  const plan = planRaw.map((r, i) => ({ ...r, _row: i }));
   const techniques = Papa.parse(techText, { header: true, skipEmptyLines: true }).data;
   state.plan = plan
     .filter(r => sanitize(r.Dia) && sanitize(r.Exercicio))
@@ -127,61 +128,6 @@ function renderTreino(){
     `;
     card.appendChild(meta);
 
-    // Stage controls: Aquecimento (primeiro do grupo) e Preparatórias
-    try {
-      const group = sanitize(ex.Grupo);
-      const { warmupTarget, prepMin, prepMax } = parseSeriesMeta(ex.SeriesBase);
-      const stage = document.createElement('div'); stage.className = 'stage';
-      // Aquecimento no primeiro exercício do grupo
-      if (warmupTarget > 0 && isFirstExerciseOfGroup(group, ex, list)) {
-        const done = getWarmupCount(week, state.day, group);
-        const row = document.createElement('div'); row.className = 'stage-row';
-        const hint = document.createElement('span'); hint.className = 'hint';
-        hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`;
-        row.appendChild(hint);
-        const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
-        btn.addEventListener('click', ()=>{
-          const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget);
-          setWarmupCount(week, state.day, group, n);
-          const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
-          setSeconds(s); start(); els.timerPanel.hidden = false;
-          hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true;
-        });
-        row.appendChild(btn);
-        const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
-        reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
-        row.appendChild(reset);
-        stage.appendChild(row);
-      }
-      // Preparatórias por exercício
-      if (prepMax > 0) {
-        const doneP = getPrepCount(week, ex._id);
-        const rowP = document.createElement('div'); rowP.className = 'stage-row';
-        const hintP = document.createElement('span'); hintP.className = 'hint';
-        const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
-        hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`;
-        rowP.appendChild(hintP);
-        const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
-        btnDone.addEventListener('click', ()=>{
-          const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax);
-          setPrepCount(week, ex._id, n);
-          const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
-          setSeconds(s); start(); els.timerPanel.hidden = false;
-          hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true;
-        });
-        rowP.appendChild(btnDone);
-        const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
-        btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; });
-        rowP.appendChild(btnReset);
-        if (prepMin > 0 && doneP < prepMin) {
-          const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
-          btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
-          rowP.appendChild(btnSkip);
-        }
-        stage.appendChild(rowP);
-      }
-      if (stage.childElementCount) card.appendChild(stage);
-    } catch(e){ console.error(e); }
 
     const inputs = document.createElement('div'); inputs.className = 'inputs';
     const inputCarga = document.createElement('div'); inputCarga.className = 'input'; inputCarga.innerHTML = `<label>Carga S${week}</label>`;
@@ -202,12 +148,7 @@ function renderTreino(){
     done.addEventListener('change', ()=> setEntry(id, week, 'done', done.checked ? '1' : '0'));
     const lbl = document.createElement('label'); lbl.style.fontSize = '12px'; lbl.style.color = 'var(--muted)'; lbl.textContent = 'Concluído';
     actions.appendChild(done); actions.appendChild(lbl);
-    const pauseBtn = document.createElement('button'); pauseBtn.className = 'btn btn-pause'; pauseBtn.textContent = '⏱️ Pausa';
-    pauseBtn.addEventListener('click', ()=>{
-      const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
-      setSeconds(s); start(); els.timerPanel.hidden = false;
-    });
-    actions.appendChild(pauseBtn);
+    // Pausa apenas na Sessão; remover do Treino
     card.appendChild(actions);
 
     els.exerciseList.appendChild(card);
@@ -352,7 +293,7 @@ function renderSessao(){
 }
 
 function startSession(){
-  const list = state.plan.filter(x => sanitize(x.Dia) === state.day);
+  const list = state.plan.filter(x => sanitize(x.Dia) === state.day).sort((a,b)=> (a._row||0) - (b._row||0));
   if (!list.length){ alert('Nenhum exercício para o dia selecionado.'); state.session.active = false; state.session.list = []; state.session.index = 0; renderSessao(); return; }
   state.session.active = true; state.session.list = list;
   const firstPending = list.findIndex(e => !getEntry(e._id, Number(state.week)).done);
