@@ -5,6 +5,8 @@ const state = {
   techniques: [],
   view: 'treino',
   session: { active: false, index: 0, list: [] },
+  autoAdvance: false,
+  theme: 'dark',
 };
 
 const els = {
@@ -24,10 +26,13 @@ const els = {
   timerPanel: document.querySelector('.timer-panel'),
   timerDisplay: document.querySelector('.timer-display'),
   timerToggle: document.getElementById('timer-toggle'),
+  headerTimer: document.getElementById('header-timer'),
+  themeToggle: document.getElementById('theme-toggle'),
   timerStart: document.getElementById('timer-start'),
   timerPause: document.getElementById('timer-pause'),
   timerReset: document.getElementById('timer-reset'),
-  timerPresets: document.querySelectorAll('.timer-presets [data-seconds]')
+  timerPresets: document.querySelectorAll('.timer-presets [data-seconds]'),
+  sessionAutoAdvance: document.getElementById('session-auto-advance'),
 };
 
 // Tabs
@@ -89,18 +94,39 @@ async function loadCSVs(){
 // Timer
 let remaining = 0; let running = false; let rafId = 0; let lastTs = 0;
 function fmt(sec){ const s = Math.max(0, Math.round(sec)); const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}`; }
-function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); }
-function tick(ts){ if(!running) return; if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt; if(remaining<=0){ remaining=0; running=false; updateTimer(); cancelAnimationFrame(rafId); return; } updateTimer(); rafId = requestAnimationFrame(tick); }
+function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); if (els.headerTimer) els.headerTimer.textContent = fmt(remaining); }
+function tick(ts){
+  if(!running) return;
+  if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt;
+  if(remaining<=0){
+    remaining=0; running=false; updateTimer(); cancelAnimationFrame(rafId);
+    // Auto-avançar ao terminar o timer, se ativo na Sessão
+    if (state.view === 'sessao' && state.session.active && state.autoAdvance) {
+      if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); }
+    }
+    return;
+  }
+  updateTimer(); rafId = requestAnimationFrame(tick);
+}
 function setSeconds(s){ remaining = s; updateTimer(); }
 function start(){ if(remaining<=0 || running) return; running = true; lastTs = 0; cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick); }
 function pause(){ running = false; cancelAnimationFrame(rafId); }
 function reset(){ pause(); remaining = 0; updateTimer(); }
 els.timerToggle.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
+if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
 els.timerStart.addEventListener('click', start);
 els.timerPause.addEventListener('click', pause);
 els.timerReset.addEventListener('click', reset);
 els.timerPresets.forEach(b => b.addEventListener('click', ()=> setSeconds(Number(b.dataset.seconds))));
 setSeconds(120);
+
+// Tema (Claro/Escuro)
+function applyTheme(theme){ state.theme = theme; const isLight = theme === 'light'; document.body.classList.toggle('light', isLight); localStorage.setItem('app2:theme', theme); if (els.themeToggle) els.themeToggle.textContent = isLight ? 'Tema: Claro' : 'Tema: Escuro'; }
+if (els.themeToggle) els.themeToggle.addEventListener('click', ()=>{ applyTheme(state.theme === 'light' ? 'dark' : 'light'); });
+
+// Auto-avançar preferência
+function applyAutoAdvance(val){ state.autoAdvance = !!val; localStorage.setItem('app2:autoAdvance', state.autoAdvance ? '1' : '0'); if (els.sessionAutoAdvance) els.sessionAutoAdvance.checked = state.autoAdvance; }
+if (els.sessionAutoAdvance) els.sessionAutoAdvance.addEventListener('change', (e)=> applyAutoAdvance(e.target.checked));
 
 // Renderers
 function renderTreino(){
@@ -215,6 +241,7 @@ function renderResumo(){
 function renderSessao(){
   els.sessionDay.textContent = `Dia: ${state.day}`;
   els.sessionWeek.textContent = `Semana ${state.week}`;
+  els.sessionBody.innerHTML = '';
   if (!state.session.active){
     els.sessionBody.innerHTML = '<div class="card">Clique em "Iniciar sessão" para começar.</div>';
     els.sessionStart.disabled = false; els.sessionEnd.disabled = true;
@@ -225,6 +252,7 @@ function renderSessao(){
   els.sessionPrev.disabled = state.session.index <= 0;
   els.sessionNext.disabled = state.session.index >= (state.session.list.length - 1);
   els.sessionComplete.disabled = false;
+  els.sessionComplete.textContent = 'Concluir e Pausar';
   if (!state.session.list || !state.session.list.length){
     els.sessionBody.innerHTML = '<div class="card">Nenhum exercício disponível para o dia selecionado.</div>';
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true; return;
@@ -237,6 +265,15 @@ function renderSessao(){
   const repsCsv = sanitize(ex[`Reps_S${week}`]);
   const card = document.createElement('div'); card.className = 'card';
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
+
+  // Meta badges
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.innerHTML = `
+    <span>${sanitize(ex.Protocolo)}</span>
+    <span>Séries: ${sanitize(ex.SeriesBase)}</span>
+    <span>Pausa: ${sanitize(ex.Pausa)}</span>
+  `;
+  card.appendChild(meta);
 
   // Stage controls
   try {
@@ -288,7 +325,7 @@ function renderSessao(){
     markPRIfAny(id, week, cargaEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
-    if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
+    // Avanço ocorrerá no término do timer, se preferência ativa
   };
 }
 
@@ -320,6 +357,11 @@ function render(){
 (async function init(){
   try {
     await loadCSVs();
+    // Inicializa preferências
+    const savedTheme = localStorage.getItem('app2:theme');
+    applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+    const savedAuto = localStorage.getItem('app2:autoAdvance') === '1';
+    applyAutoAdvance(savedAuto);
     render();
   } catch (e) {
     console.error(e);
