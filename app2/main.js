@@ -70,14 +70,67 @@ function exportData(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'app2-dados.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
+function getCaseInsensitive(obj, key){
+  const lk = String(key).toLowerCase();
+  for (const k of Object.keys(obj||{})){ if (String(k).toLowerCase() === lk) return obj[k]; }
+  return undefined;
+}
+function tryImportFlexible(obj){
+  let count = 0;
+  // Format 1: { entries: { 'app2:...': value } }
+  if (obj && typeof obj === 'object' && obj.entries && typeof obj.entries === 'object'){
+    Object.entries(obj.entries).forEach(([k,v])=>{ if (String(k).startsWith('app2:')) { localStorage.setItem(k, String(v)); count++; } });
+    return { count };
+  }
+  // Format 2: { 'app2:...': value, ... }
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)){
+    for (const [k,v] of Object.entries(obj)){ if (String(k).startsWith('app2:')) { localStorage.setItem(k, String(v)); count++; } }
+    if (count>0) return { count };
+  }
+  // Format 3: Array of exercise progress rows
+  if (Array.isArray(obj)){
+    for (const row of obj){
+      const dia = getCaseInsensitive(row, 'Dia') || getCaseInsensitive(row,'day') || getCaseInsensitive(row,'dia');
+      const exercicio = getCaseInsensitive(row, 'Exercicio') || getCaseInsensitive(row,'exercise') || getCaseInsensitive(row,'exercicio');
+      if (!dia || !exercicio) continue;
+      const id = `${sanitize(dia)}|${sanitize(exercicio)}`;
+      for (let w=1; w<=4; w++){
+        const carga = getCaseInsensitive(row, `Carga_S${w}`) || getCaseInsensitive(row, `carga_s${w}`);
+        const reps = getCaseInsensitive(row, `Reps_S${w}`) || getCaseInsensitive(row, `reps_s${w}`);
+        const nota = getCaseInsensitive(row, `Nota_S${w}`) || getCaseInsensitive(row, `nota_s${w}`) || getCaseInsensitive(row, `nota`);
+        const done = getCaseInsensitive(row, `Done_S${w}`) || getCaseInsensitive(row, `done_s${w}`) || getCaseInsensitive(row, `done`);
+        if (carga != null){ localStorage.setItem(keyFor(id,w,'carga'), String(carga)); count++; }
+        if (reps != null){ localStorage.setItem(keyFor(id,w,'reps'), String(reps)); count++; }
+        if (nota != null){ localStorage.setItem(keyFor(id,w,'nota'), String(nota)); count++; }
+        if (done != null){ localStorage.setItem(keyFor(id,w,'done'), (done===true || String(done)==='1') ? '1' : '0'); count++; }
+      }
+    }
+    if (count>0) return { count };
+  }
+  // Format 4: { '<Dia>|<Exercicio>': { S1: {carga,reps,nota,done}, ... } }
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)){
+    for (const [id,val] of Object.entries(obj)){
+      if (!String(id).includes('|')) continue;
+      for (let w=1; w<=4; w++){
+        const wk = val && (val[`S${w}`] || val[`s${w}`]);
+        if (!wk) continue;
+        if (wk.carga != null){ localStorage.setItem(keyFor(id,w,'carga'), String(wk.carga)); count++; }
+        if (wk.reps != null){ localStorage.setItem(keyFor(id,w,'reps'), String(wk.reps)); count++; }
+        if (wk.nota != null){ localStorage.setItem(keyFor(id,w,'nota'), String(wk.nota)); count++; }
+        if (wk.done != null){ localStorage.setItem(keyFor(id,w,'done'), (wk.done===true || String(wk.done)==='1') ? '1' : '0'); count++; }
+      }
+    }
+    if (count>0) return { count };
+  }
+  throw new Error('Formato inválido: nenhum dado reconhecido');
+}
 function importDataFromFile(file){
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const obj = JSON.parse(reader.result);
-      if (!obj || typeof obj !== 'object' || !obj.entries) throw new Error('Formato inválido');
-      Object.entries(obj.entries).forEach(([k,v])=>{ if (String(k).startsWith('app2:')) localStorage.setItem(k, String(v)); });
-      alert('Dados importados com sucesso.');
+      const res = tryImportFlexible(obj);
+      alert(`Dados importados: ${res.count} entradas.`);
       render();
     } catch (e){ alert('Falha ao importar: ' + e.message); }
   };
