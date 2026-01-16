@@ -39,7 +39,8 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .btn-large { padding: 12px 18px; min-height: 48px; font-size: 16px; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:hover { border-color: var(--accent); }
-.btn-danger { background: #1a0f0f; border-color: #4a1f1f; color: #ffdede; }
+.btn-danger { background: #dc2626; border-color: #b91c1c; color: #fff; }
+.btn-success { background: #22c55e; border-color: #16a34a; color: #052e16; }
 .session-controls { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 16px; }
 .session-controls .btn-prev { justify-self: start; }
 .session-controls .btn-complete { justify-self: center; background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -54,13 +55,17 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .timer-panel { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 10px; margin: 8px 0 0; }
 /* Fullscreen timer styles */
 #timer:fullscreen { position: fixed; inset: 0; z-index: 999; background: var(--bg); padding: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-#timer:fullscreen .timer-bar { justify-content: center; width: 100%; }
+#timer:fullscreen .timer-bar { justify-content: center; width: 100%; flex-direction: column; align-items: center; gap: 12px; }
+#timer:fullscreen .timer-actions { order: 1; }
 #timer:fullscreen .timer-display { font-size: 24vmin; line-height: 1; text-align: center; }
+#timer:fullscreen .timer-display { order: 2; }
 #timer:fullscreen .timer-panel { max-width: 720px; margin: 12px auto 0; width: 100%; }
 /* Immersive (fallback for iOS) */
 .timer-immersive { position: fixed; inset: 0; z-index: 999; background: var(--bg); padding: 16px; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-.timer-immersive .timer-bar { justify-content: center; width: 100%; }
+.timer-immersive .timer-bar { justify-content: center; width: 100%; flex-direction: column; align-items: center; gap: 12px; }
+.timer-immersive .timer-actions { order: 1; }
 .timer-immersive .timer-display { font-size: 24vmin; line-height: 1; text-align: center; }
+.timer-immersive .timer-display { order: 2; }
 .timer-immersive .timer-panel { max-width: 720px; margin: 12px auto 0; width: 100%; }
 
 /* Pulse animation for vibration fallback */

@@ -674,7 +674,7 @@ function renderSessao(){
       const done = getWarmupCount(week, state.day, group);
       const row = document.createElement('div'); row.className = 'stage-row';
       const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`; row.appendChild(hint);
-      const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
+      const btn = document.createElement('button'); btn.className = 'btn btn-success'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
       btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const s = 60; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; reset.disabled = n <= 0; });
       row.appendChild(btn);
       const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
