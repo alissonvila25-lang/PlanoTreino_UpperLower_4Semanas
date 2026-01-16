@@ -168,6 +168,6 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-controls .btn-complete:hover { filter: brightness(1.05); }
 /* Two-line button labels */
 .btn .btn-title { display: block; font-weight: 700; line-height: 1.25; margin-bottom: 2px; }
-.btn .btn-sub { display: block; font-size: 12px; line-height: 1.25; color: var(--muted); }
+.btn .btn-sub { display: block; font-size: inherit; line-height: 1.25; font-weight: 700; color: inherit; }
 .btn { white-space: normal; }
-.light .btn .btn-sub { color: #475569; }
+.light .btn .btn-sub { color: inherit; }
