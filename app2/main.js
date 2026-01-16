@@ -683,10 +683,10 @@ function renderSessao(){
       const done = getWarmupCount(week, state.day, group);
       const row = document.createElement('div'); row.className = 'stage-row stage-row-inline';
       const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`; row.appendChild(hint);
-      const btn = document.createElement('button'); btn.className = 'btn btn-success'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
+      const btn = document.createElement('button'); btn.className = 'btn btn-success'; btn.innerHTML = '<span class="btn-title">Concluir</span><span class="btn-sub">aquecimento</span>'; btn.disabled = done >= warmupTarget;
       btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const s = 60; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; reset.disabled = n <= 0; });
       row.appendChild(btn);
-      const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
+      const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.innerHTML = '<span class="btn-title">Reset</span><span class="btn-sub">aquecimento</span>'; reset.disabled = done <= 0;
       reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
       row.appendChild(reset);
       stage.appendChild(row);
@@ -697,10 +697,10 @@ function renderSessao(){
       const hintP = document.createElement('span'); hintP.className = 'hint';
       const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
       hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`; rowP.appendChild(hintP);
-      const btnDone = document.createElement('button'); btnDone.className = 'btn btn-success'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
+      const btnDone = document.createElement('button'); btnDone.className = 'btn btn-success'; btnDone.innerHTML = '<span class="btn-title">Concluir</span><span class="btn-sub">preparatória</span>'; btnDone.disabled = doneP >= prepMax;
       btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const s = 90; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; btnReset.disabled = n <= 0; });
       rowP.appendChild(btnDone);
-      const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
+      const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.innerHTML = '<span class="btn-title">Reset</span><span class="btn-sub">preparatória</span>'; btnReset.disabled = doneP <= 0;
       btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; }); rowP.appendChild(btnReset);
       if (prepMin > 0 && doneP < prepMin) {
         const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-gold'; btnSkip.textContent = 'Ir para válida';
