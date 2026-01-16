@@ -28,17 +28,20 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .stage-row { flex-wrap: wrap; }
 .stage-row .hint { flex: 1 1 180px; }
 .stage-row .btn { flex: 0 0 auto; min-width: 140px; }
+.stage-row .btn { text-align: center; }
+.stage-row-inline .btn { min-width: 180px; }
 .stage-row-inline .hint { flex: 1 1 auto; }
 @media (max-width: 768px) {
   .stage-row { gap: 6px; }
   .stage-row .hint { flex: 1 1 100%; }
   .stage-row .btn { padding: 10px 14px; font-size: 15px; min-width: 160px; }
   .stage-row-inline .hint { flex: 1 1 auto; }
+  .stage-row-inline .btn { min-width: 180px; }
 }
 /* Ultra-small screens: keep inline by tightening spacing */
 @media (max-width: 380px) {
   .stage-row { gap: 4px; }
-  .stage-row-inline { flex-wrap: nowrap; }
+  .stage-row-inline { flex-wrap: wrap; }
   .stage-row-inline .hint { flex: 1 1 0; min-width: 0; }
   .stage-row .btn { min-width: 128px; padding: 8px 12px; font-size: 14px; }
 }
