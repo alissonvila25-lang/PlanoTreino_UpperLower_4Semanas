@@ -293,7 +293,9 @@ if (els.summaryImport) els.summaryImport.addEventListener('click', ()=>{
 // Renderers
 function renderTreino(){
   const week = Number(state.week);
-  const list = state.plan.filter(x => sanitize(x.Dia) === state.day);
+  const list = state.plan
+    .filter(x => sanitize(x.Dia) === state.day)
+    .sort((a,b)=> (a._row||0) - (b._row||0));
   els.exerciseList.innerHTML = '';
   if (!list.length){ els.exerciseList.innerHTML = '<div class="card">Nenhum exercício para o dia selecionado.</div>'; return; }
   for (const ex of list){
@@ -384,11 +386,16 @@ function renderResumo(){
   els.summary.appendChild(chartCard);
 
   const byDay = {};
-  for (const ex of state.plan){ const id = ex._id; const day = sanitize(ex.Dia); const e = getEntry(id, week); if (!byDay[day]) byDay[day] = []; if (e.carga || e.reps || e.done || e.nota){ byDay[day].push({ ex, e }); } }
+  for (const ex of state.plan){
+    const id = ex._id; const day = sanitize(ex.Dia); const e = getEntry(id, week);
+    if (!byDay[day]) byDay[day] = [];
+    if (e.carga || e.reps || e.done || e.nota){ byDay[day].push({ ex, e }); }
+  }
   Object.keys(byDay).forEach(day => {
     const section = document.createElement('div'); section.className = 'card';
     const h3 = document.createElement('h3'); h3.textContent = day; section.appendChild(h3);
-    for (const { ex, e } of byDay[day]){
+    const items = byDay[day].sort((a,b)=> (a.ex._row||0) - (b.ex._row||0));
+    for (const { ex, e } of items){
       const p = document.createElement('div'); p.className = 'meta'; p.innerHTML = `
         <span>${sanitize(ex.Exercicio)}</span>
         <span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>
