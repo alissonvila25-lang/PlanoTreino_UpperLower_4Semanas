@@ -808,7 +808,7 @@ function renderSessao(){
 
   // Controles de navegação dentro do card
   const actionsCard = document.createElement('div'); actionsCard.className = 'actions session-controls';
-  const btnPrev = document.createElement('button'); btnPrev.className = 'btn btn-prev'; btnPrev.textContent = 'Anterior'; btnPrev.disabled = state.session.index <= 0;
+  const btnPrev = document.createElement('button'); btnPrev.className = 'btn btn-secondary btn-prev'; btnPrev.textContent = 'Anterior'; btnPrev.disabled = state.session.index <= 0;
   btnPrev.addEventListener('click', () => { if (state.session.index > 0) { state.session.index--; renderSessao(); } });
   const btnComplete = document.createElement('button'); btnComplete.className = 'btn btn-success'; btnComplete.textContent = 'Concluir e Pausar';
   btnComplete.addEventListener('click', () => {
@@ -818,7 +818,7 @@ function renderSessao(){
     setSeconds(s); start(); els.timerPanel.hidden = false;
     if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
   });
-  const btnNext = document.createElement('button'); btnNext.className = 'btn btn-next'; btnNext.textContent = 'Próximo'; btnNext.disabled = state.session.index >= (state.session.list.length - 1);
+  const btnNext = document.createElement('button'); btnNext.className = 'btn btn-secondary btn-next'; btnNext.textContent = 'Próximo'; btnNext.disabled = state.session.index >= (state.session.list.length - 1);
   btnNext.addEventListener('click', () => { if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); } });
   actionsCard.appendChild(btnPrev);
   actionsCard.appendChild(btnComplete);

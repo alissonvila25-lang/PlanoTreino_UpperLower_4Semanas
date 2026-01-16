@@ -39,6 +39,8 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .btn-large { padding: 12px 18px; min-height: 48px; font-size: 16px; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:hover { border-color: var(--accent); }
+.btn-secondary { background: #1b2323; border-color: #2a3434; color: var(--text); }
+.light .btn-secondary { background: #e5e7eb; border-color: #cbd5e1; color: #101314; }
 .btn-danger { background: #a23b4c; border-color: #7a2634; color: #fff; }
 .btn-success { background: #198e84; border-color: #0f766e; color: #fff; }
 .btn-success:hover, .btn-danger:hover { filter: brightness(1.05); }
