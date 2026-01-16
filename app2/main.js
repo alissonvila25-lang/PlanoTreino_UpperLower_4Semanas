@@ -255,6 +255,7 @@ function tick(ts){
   if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt;
   if(remaining<=0){
     remaining=0; running=false; updateTimer(); cancelAnimationFrame(rafId);
+    if (els.headerTimer) els.headerTimer.classList.remove('timer-running');
     // Auto-avançar ao terminar o timer, se ativo na Sessão
     if (state.view === 'sessao' && state.session.active && state.autoAdvance) {
       if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); }
@@ -264,9 +265,9 @@ function tick(ts){
   updateTimer(); rafId = requestAnimationFrame(tick);
 }
 function setSeconds(s){ remaining = s; updateTimer(); }
-function start(){ if(remaining<=0 || running) return; running = true; lastTs = 0; cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick); }
-function pause(){ running = false; cancelAnimationFrame(rafId); }
-function reset(){ pause(); remaining = 0; updateTimer(); }
+function start(){ if(remaining<=0 || running) return; running = true; lastTs = 0; cancelAnimationFrame(rafId); if (els.headerTimer) els.headerTimer.classList.add('timer-running'); rafId = requestAnimationFrame(tick); }
+function pause(){ running = false; cancelAnimationFrame(rafId); if (els.headerTimer) els.headerTimer.classList.remove('timer-running'); }
+function reset(){ pause(); remaining = 0; updateTimer(); if (els.headerTimer) els.headerTimer.classList.remove('timer-running'); }
 els.timerToggle.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
 if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
 els.timerStart.addEventListener('click', start);
