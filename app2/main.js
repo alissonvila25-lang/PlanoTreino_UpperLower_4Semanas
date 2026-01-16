@@ -17,6 +17,7 @@ const els = {
   summary: document.getElementById('summary'),
   summaryImport: document.getElementById('summary-import'),
   summaryExport: document.getElementById('summary-export'),
+  summaryExportCsv: document.getElementById('summary-export-csv'),
   sessionDay: document.getElementById('session-day'),
   sessionWeek: document.getElementById('session-week'),
   sessionStart: document.getElementById('session-start'),
@@ -69,6 +70,43 @@ function exportData(){
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'app2-dados.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function exportDataCSV(){
+  const map = new Map();
+  const re = /^app2:(.+?):S(\d+):(carga|reps|nota|done|pr)$/i;
+  for (const k of listAllStateKeys()){
+    const m = String(k).match(re);
+    if (!m) continue;
+    const id = m[1]; const semana = parseInt(m[2],10)||0; const campo = m[3].toLowerCase();
+    if (!id.includes('|') || semana < 1 || semana > 4) continue;
+    const [dia, exercicio] = id.split('|');
+    const key = `${id}|S${semana}`;
+    if (!map.has(key)) map.set(key, { Dia: dia, Exercicio: exercicio, Semana: semana, Carga: '', Reps: '', Nota: '', Done: '', PR: '' });
+    const row = map.get(key);
+    if (campo === 'carga') row.Carga = localStorage.getItem(k) || '';
+    else if (campo === 'reps') row.Reps = localStorage.getItem(k) || '';
+    else if (campo === 'nota') row.Nota = localStorage.getItem(k) || '';
+    else if (campo === 'done') row.Done = (localStorage.getItem(k) === '1') ? '1' : '';
+    else if (campo === 'pr') row.PR = (localStorage.getItem(k) === '1') ? '1' : '';
+  }
+  const rows = Array.from(map.values()).sort((a,b)=>{
+    if (a.Dia !== b.Dia) return a.Dia.localeCompare(b.Dia, 'pt-BR');
+    if (a.Exercicio !== b.Exercicio) return a.Exercicio.localeCompare(b.Exercicio, 'pt-BR');
+    return a.Semana - b.Semana;
+  });
+  const header = ['Dia','Exercicio','Semana','Carga','Reps','Nota','Done','PR'];
+  const esc = s => {
+    const str = String(s ?? '');
+    return (/[",\n\r]/.test(str)) ? '"' + str.replace(/"/g,'""') + '"' : str;
+  };
+  const lines = [header.join(',')];
+  for (const r of rows){
+    lines.push([r.Dia, r.Exercicio, r.Semana, r.Carga, r.Reps, r.Nota, r.Done, r.PR].map(esc).join(','));
+  }
+  const csv = lines.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'app2-dados.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 function getCaseInsensitive(obj, key){
   const lk = String(key).toLowerCase();
@@ -245,6 +283,7 @@ if (els.themeToggle) els.themeToggle.addEventListener('click', ()=>{ applyTheme(
 function applyAutoAdvance(val){ state.autoAdvance = !!val; localStorage.setItem('app2:autoAdvance', state.autoAdvance ? '1' : '0'); if (els.sessionAutoAdvance) els.sessionAutoAdvance.checked = state.autoAdvance; }
 if (els.sessionAutoAdvance) els.sessionAutoAdvance.addEventListener('change', (e)=> applyAutoAdvance(e.target.checked));
 if (els.summaryExport) els.summaryExport.addEventListener('click', exportData);
+if (els.summaryExportCsv) els.summaryExportCsv.addEventListener('click', exportDataCSV);
 if (els.summaryImport) els.summaryImport.addEventListener('click', ()=>{
   const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json';
   input.addEventListener('change', ()=>{ if (input.files && input.files[0]) importDataFromFile(input.files[0]); });
