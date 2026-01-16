@@ -42,6 +42,21 @@ const els = {
   sessionAutoAdvance: document.getElementById('session-auto-advance'),
 };
 
+// Navegação entre abas
+const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabButtons.forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    const targetId = `tab-${btn.dataset.tab}`;
+    const target = document.getElementById(targetId);
+    if (target) target.classList.add('is-active');
+    state.view = btn.dataset.tab;
+    render();
+  });
+});
+
 
 // Storage
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }

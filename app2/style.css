@@ -67,7 +67,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-card .inputs-compact .input input { height: 34px; }
 /* Badge */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 1; background: var(--accent); color: #fff; border: 1px solid var(--accent); }
-@media (max-width: 520px) {
+@media (max-width: 768px) {
   .session-controls { grid-template-columns: 1fr; }
   .session-controls .btn-prev,
   .session-controls .btn-next,
