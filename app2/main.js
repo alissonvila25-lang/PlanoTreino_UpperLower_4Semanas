@@ -476,16 +476,6 @@ function renderSessao(){
     <span>Séries: ${sanitize(ex.SeriesBase)}</span>
     <span>Pausa: ${sanitize(ex.Pausa)}</span>
   `;
-  // Botão rápido para aplicar a pausa no timer
-  (function(){
-    const m = String(ex.Pausa||'').match(/(\d+):(\d+)/);
-    if (m){
-      const secs = (parseInt(m[1],10)||0)*60 + (parseInt(m[2],10)||0);
-      const b = document.createElement('button'); b.className = 'btn btn-small'; b.type = 'button'; b.textContent = `Usar pausa ${m[1]}:${m[2].padStart(2,'0')}`;
-      b.addEventListener('click', ()=>{ setSeconds(secs); start(); els.timerPanel.hidden = false; });
-      meta.appendChild(b);
-    }
-  })();
   card.appendChild(meta);
 
   // Stage controls
