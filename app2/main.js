@@ -251,12 +251,14 @@ async function loadCSVs(){
 let remaining = 0; let running = false; let rafId = 0; let lastTs = 0;
 function fmt(sec){ const s = Math.max(0, Math.round(sec)); const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}`; }
 function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); if (els.headerTimer) els.headerTimer.textContent = fmt(remaining); }
+function vibrate(pattern){ try { if (navigator && typeof navigator.vibrate === 'function') { navigator.vibrate(pattern || [250, 125, 250]); } } catch(e) { /* noop */ } }
 function tick(ts){
   if(!running) return;
   if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt;
   if(remaining<=0){
     remaining=0; running=false; updateTimer(); cancelAnimationFrame(rafId);
     if (els.headerTimer) els.headerTimer.classList.remove('timer-running');
+    vibrate([200,100,200]);
     // Auto-avançar ao terminar o timer, se ativo na Sessão
     if (state.view === 'sessao' && state.session.active && state.autoAdvance) {
       if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); }
