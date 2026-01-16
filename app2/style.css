@@ -167,7 +167,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .light .btn-secondary:disabled { background: #eef2f7; border-color: #d7dee6; color: #6b7280; opacity: 0.9; filter: none; }
 .session-controls .btn-complete:hover { filter: brightness(1.05); }
 /* Two-line button labels */
-.btn .btn-title { display: block; font-weight: 700; line-height: 1.25; margin-bottom: 2px; }
-.btn .btn-sub { display: block; font-size: inherit; line-height: 1.25; font-weight: 700; color: inherit; }
+.btn .btn-title { display: block; font-weight: 700; line-height: 1.2; margin-bottom: 1px; }
+.btn .btn-sub { display: block; font-size: inherit; line-height: 1.2; font-weight: 700; color: inherit; }
 .btn { white-space: normal; }
 .light .btn .btn-sub { color: inherit; }
