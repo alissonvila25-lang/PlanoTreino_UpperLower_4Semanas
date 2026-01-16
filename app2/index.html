@@ -39,6 +39,25 @@
   </header>
 
   <main>
+    <section id="timer" class="timer">
+      <div class="timer-bar">
+        <div class="timer-display">00:00</div>
+        <button id="timer-toggle" class="btn btn-small">Controles</button>
+      </div>
+      <div class="timer-panel" hidden>
+        <div class="timer-controls">
+          <button id="timer-start" class="btn">Start</button>
+          <button id="timer-pause" class="btn">Pause</button>
+          <button id="timer-reset" class="btn btn-danger">Reset</button>
+          <div class="timer-presets">
+            <button class="btn" data-seconds="120">2:00</button>
+            <button class="btn" data-seconds="90">1:30</button>
+            <button class="btn" data-seconds="60">1:00</button>
+          </div>
+          <button id="timer-apply-current-rest" class="btn">Pausa válida</button>
+        </div>
+      </div>
+    </section>
     <section id="tab-treino" class="tab is-active">
       <div id="exercise-list"></div>
     </section>
@@ -72,23 +91,7 @@
       <div id="summary"></div>
     </section>
 
-    <section id="timer" class="timer">
-      <button id="timer-toggle" class="btn">Timer</button>
-      <div class="timer-panel" hidden>
-        <div class="timer-display">00:00</div>
-        <div class="timer-controls">
-          <button id="timer-start" class="btn">Start</button>
-          <button id="timer-pause" class="btn">Pause</button>
-          <button id="timer-reset" class="btn btn-danger">Reset</button>
-          <div class="timer-presets">
-            <button class="btn" data-seconds="120">2:00</button>
-            <button class="btn" data-seconds="90">1:30</button>
-            <button class="btn" data-seconds="60">1:00</button>
-          </div>
-          <button id="timer-apply-current-rest" class="btn">Pausa válida</button>
-        </div>
-      </div>
-    </section>
+    
   </main>
 
   <script>
