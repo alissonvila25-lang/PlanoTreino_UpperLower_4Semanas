@@ -39,8 +39,9 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .btn-large { padding: 12px 18px; min-height: 48px; font-size: 16px; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:hover { border-color: var(--accent); }
-.btn-danger { background: #c24141; border-color: #9f2f2f; color: #fff; }
-.btn-success { background: #2ea44f; border-color: #238636; color: #fff; }
+.btn-danger { background: #ba4d4d; border-color: #9a3f3f; color: #fff; }
+.btn-success { background: #3dbb73; border-color: #2c8e58; color: #fff; }
+.btn-success:hover, .btn-danger:hover { filter: brightness(1.05); }
 .session-controls { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 16px; }
 .session-controls .btn-prev { justify-self: start; }
 .session-controls .btn-complete { justify-self: center; background: var(--accent); border-color: var(--accent); color: #fff; }
