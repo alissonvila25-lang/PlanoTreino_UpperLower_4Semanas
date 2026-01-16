@@ -39,6 +39,7 @@ const els = {
   timerPause: document.getElementById('timer-pause'),
   timerReset: document.getElementById('timer-reset'),
   timerPresets: document.querySelectorAll('.timer-presets [data-seconds]'),
+  timerFull: document.getElementById('timer-fullscreen'),
   timerApplyCurrent: document.getElementById('timer-apply-current-rest'),
   vibrateToggle: document.getElementById('vibrate-toggle'),
   beepToggle: document.getElementById('beep-toggle'),
@@ -327,12 +328,70 @@ if (els.timerApplyCurrent) els.timerApplyCurrent.addEventListener('click', ()=>{
 els.timerStart.addEventListener('click', start);
 els.timerPause.addEventListener('click', pause);
 els.timerReset.addEventListener('click', reset);
-els.timerPresets.forEach(b => b.addEventListener('click', ()=> setSeconds(Number(b.dataset.seconds))));
+// Editable presets: load, apply and edit via long-press
+const defaultPresets = [120, 90, 60];
+function loadPresets(){
+  return [
+    parseInt(localStorage.getItem('app2:preset1')||defaultPresets[0],10)||defaultPresets[0],
+    parseInt(localStorage.getItem('app2:preset2')||defaultPresets[1],10)||defaultPresets[1],
+    parseInt(localStorage.getItem('app2:preset3')||defaultPresets[2],10)||defaultPresets[2],
+  ];
+}
+function labelFor(sec){ const m = Math.floor(sec/60); const s = sec%60; return `${m}:${String(s).padStart(2,'0')}`; }
+function applyPresetLabels(){
+  const vals = loadPresets();
+  els.timerPresets.forEach((b,i)=>{ const v = vals[i] ?? defaultPresets[i]; b.dataset.seconds = String(v); b.textContent = labelFor(v); });
+}
+applyPresetLabels();
+function parseTimeInput(str){
+  const s = String(str||'').trim();
+  const mmss = s.match(/^([0-9]+)\s*[:\-]\s*([0-9]{1,2})$/);
+  if (mmss){ return (parseInt(mmss[1],10)||0)*60 + (parseInt(mmss[2],10)||0); }
+  const n = parseInt(s,10);
+  if (!isNaN(n) && n>=0) return n;
+  return null;
+}
+function editPreset(i){
+  const current = loadPresets()[i] ?? defaultPresets[i];
+  const input = prompt('Novo tempo para o preset (mm:ss ou segundos):', labelFor(current));
+  const secs = parseTimeInput(input);
+  if (secs == null) { alert('Valor inválido. Use mm:ss ou número de segundos.'); return; }
+  localStorage.setItem(`app2:preset${i+1}`, String(secs));
+  applyPresetLabels();
+}
+els.timerPresets.forEach((b,i)=>{
+  // Aplicar
+  b.addEventListener('click', ()=> setSeconds(Number(b.dataset.seconds)));
+  // Editar via long-press
+  let pressTimer = null;
+  const start = ()=>{ clearTimeout(pressTimer); pressTimer = setTimeout(()=> editPreset(i), 650); };
+  const cancel = ()=>{ clearTimeout(pressTimer); };
+  b.addEventListener('mousedown', start);
+  b.addEventListener('mouseup', cancel);
+  b.addEventListener('mouseleave', cancel);
+  b.addEventListener('touchstart', start, { passive: true });
+  b.addEventListener('touchend', cancel);
+  // Editar via contexto (desktop)
+  b.addEventListener('contextmenu', (e)=>{ e.preventDefault(); editPreset(i); });
+});
 setSeconds(120);
 
 // Tema (Claro/Escuro)
 function applyTheme(theme){ state.theme = theme; const isLight = theme === 'light'; document.body.classList.toggle('light', isLight); localStorage.setItem('app2:theme', theme); if (els.themeToggle) els.themeToggle.textContent = isLight ? 'Tema: Claro' : 'Tema: Escuro'; }
 if (els.themeToggle) els.themeToggle.addEventListener('click', ()=>{ applyTheme(state.theme === 'light' ? 'dark' : 'light'); });
+// Fullscreen toggle
+if (els.timerFull) {
+  const timerEl = document.getElementById('timer');
+  els.timerFull.addEventListener('click', async ()=>{
+    try {
+      if (!document.fullscreenElement) {
+        if (timerEl && timerEl.requestFullscreen) await timerEl.requestFullscreen({ navigationUI: 'hide' });
+      } else {
+        if (document.exitFullscreen) await document.exitFullscreen();
+      }
+    } catch(e) { /* noop */ }
+  });
+}
 
 // Auto-avançar preferência
 function applyAutoAdvance(val){ state.autoAdvance = !!val; localStorage.setItem('app2:autoAdvance', state.autoAdvance ? '1' : '0'); if (els.sessionAutoAdvance) els.sessionAutoAdvance.checked = state.autoAdvance; }
