@@ -25,6 +25,9 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .meta .badge { margin-left: 6px; }
 .stage { display: grid; gap: 8px; margin: 8px 0; }
 .stage-row { display: flex; gap: 8px; align-items: center; }
+.stage-row { flex-wrap: wrap; }
+.stage-row .hint { flex: 1 1 180px; }
+.stage-row .btn { flex: 0 0 auto; }
 .hint { font-size: 12px; color: var(--muted); }
 .inputs { display: grid; gap: 10px; margin-top: 8px; }
 .inputs-compact { grid-template-columns: 1fr 1fr; gap: 8px; }

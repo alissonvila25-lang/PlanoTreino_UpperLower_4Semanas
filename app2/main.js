@@ -539,9 +539,10 @@ function renderTecnicas(){
 }
 
 function parseLoad(s){ if(!s) return null; const m = String(s).match(/([0-9]+(?:\.[0-9]+)?)(\s*(kg|lb))?/i); if(!m) return null; return { value: parseFloat(m[1]), unit: (m[3]||'').toLowerCase() }; }
+function parseReps(s){ if(s==null) return null; const nums = String(s).match(/\d+(?:\.\d+)?/g); if(!nums || !nums.length) return null; return Math.max(...nums.map(Number)); }
+function bestPreviousLoadAndReps(exId, uptoWeek){ let bestLoad = null, bestReps = null, bestUnit = null; for(let w=1; w<uptoWeek; w++){ const e = getEntry(exId, w); const p = parseLoad(e.carga); if(!p) continue; const r = parseReps(e.reps); if(bestLoad == null || p.value > bestLoad){ bestLoad = p.value; bestUnit = p.unit; bestReps = (r==null? null : r); } else if (p.value === bestLoad){ if(r!=null && (bestReps==null || r > bestReps)) bestReps = r; } } return { load: bestLoad, unit: bestUnit, reps: bestReps }; }
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
-function bestPreviousLoad(exId, uptoWeek){ let best = null; for(let w=1; w<uptoWeek; w++){ const e = getEntry(exId, w); const p = parseLoad(e.carga); if(p){ if(!best || p.value > best.value) best = p; } } return best; }
-function markPRIfAny(exId, week, cargaStr){ const now = parseLoad(cargaStr); if(!now) return false; const best = bestPreviousLoad(exId, week); const key = keyFor(exId, week, 'pr'); if(!best || now.value > best.value){ localStorage.setItem(key, '1'); return true; } else { localStorage.removeItem(key); return false; } }
+function markPRIfAny(exId, week, cargaStr, repsStr){ const now = parseLoad(cargaStr); const nowReps = parseReps(repsStr); if(!now) return false; const best = bestPreviousLoadAndReps(exId, week); const key = keyFor(exId, week, 'pr'); if(best.load == null || now.value > best.load){ localStorage.setItem(key, '1'); return true; } if (best.load != null && now.value === best.load && nowReps != null && best.reps != null && nowReps > best.reps){ localStorage.setItem(key, '1'); return true; } localStorage.removeItem(key); return false; }
 function hasPR(exId, week){ return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
 
 function renderResumo(){
@@ -813,7 +814,7 @@ function renderSessao(){
   const btnComplete = document.createElement('button'); btnComplete.className = 'btn btn-success'; btnComplete.textContent = 'Concluir e Pausar';
   btnComplete.addEventListener('click', () => {
     setEntry(id, week, 'done', '1');
-    markPRIfAny(id, week, cargaEl.value);
+    markPRIfAny(id, week, cargaEl.value, repsEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
     if (state.session.index < state.session.list.length - 1){ state.session.index++; renderSessao(); }
@@ -833,7 +834,7 @@ function renderSessao(){
 
   els.sessionComplete.onclick = () => {
     setEntry(id, week, 'done', '1');
-    markPRIfAny(id, week, cargaEl.value);
+    markPRIfAny(id, week, cargaEl.value, repsEl.value);
     const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120;
     setSeconds(s); start(); els.timerPanel.hidden = false;
     // Avança imediatamente e evita empilhamento
