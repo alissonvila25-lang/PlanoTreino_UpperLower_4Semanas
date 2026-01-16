@@ -8,6 +8,8 @@ const state = {
   autoAdvance: false,
   theme: 'dark',
   vibrate: true,
+  beep: true,
+  wakeLock: false,
 };
 
 const els = {
@@ -39,6 +41,8 @@ const els = {
   timerPresets: document.querySelectorAll('.timer-presets [data-seconds]'),
   timerApplyCurrent: document.getElementById('timer-apply-current-rest'),
   vibrateToggle: document.getElementById('vibrate-toggle'),
+  beepToggle: document.getElementById('beep-toggle'),
+  wakeToggle: document.getElementById('wakelock-toggle'),
   sessionAutoAdvance: document.getElementById('session-auto-advance'),
 };
 
@@ -257,6 +261,24 @@ let remaining = 0; let running = false; let rafId = 0; let lastTs = 0;
 function fmt(sec){ const s = Math.max(0, Math.round(sec)); const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}`; }
 function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); if (els.headerTimer) els.headerTimer.textContent = fmt(remaining); }
 function vibrate(pattern){ if (!state.vibrate) return; try { if (navigator && typeof navigator.vibrate === 'function') { navigator.vibrate(pattern || [250, 125, 250]); } } catch(e) { /* noop */ } }
+function beep(){
+  if (!state.beep) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880; // A5
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+    o.start();
+    // fade out
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+    o.stop(ctx.currentTime + 0.3);
+    o.onended = () => ctx.close();
+  } catch(e) { /* noop */ }
+}
 function tick(ts){
   if(!running) return;
   if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt;
@@ -264,6 +286,7 @@ function tick(ts){
     remaining=0; running=false; updateTimer(); cancelAnimationFrame(rafId);
     if (els.headerTimer) els.headerTimer.classList.remove('timer-running');
     vibrate([200,100,200]);
+    beep();
     // Auto-avançar ao terminar o timer, se ativo na Sessão
     if (state.view === 'sessao' && state.session.active && state.autoAdvance) {
       if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); }
@@ -319,6 +342,36 @@ if (els.summaryImport) els.summaryImport.addEventListener('click', ()=>{
 // Vibrate preference toggle
 function applyVibrate(val){ state.vibrate = !!val; localStorage.setItem('app2:vibrate', state.vibrate ? '1' : '0'); if (els.vibrateToggle) els.vibrateToggle.checked = state.vibrate; }
 if (els.vibrateToggle) els.vibrateToggle.addEventListener('change', (e)=> applyVibrate(e.target.checked));
+
+// Beep preference toggle
+function applyBeep(val){ state.beep = !!val; localStorage.setItem('app2:beep', state.beep ? '1' : '0'); if (els.beepToggle) els.beepToggle.checked = state.beep; }
+if (els.beepToggle) els.beepToggle.addEventListener('change', (e)=> applyBeep(e.target.checked));
+
+// Wake Lock preference toggle
+let wakeLockSentinel = null;
+async function requestWakeLock(){
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      wakeLockSentinel.addEventListener('release', ()=>{ /* released */ });
+    }
+  } catch(e) {
+    // Could be disallowed or unsupported
+  }
+}
+async function releaseWakeLock(){
+  try { if (wakeLockSentinel) { await wakeLockSentinel.release(); wakeLockSentinel = null; } } catch(e) {}
+}
+async function applyWakeLock(val){
+  state.wakeLock = !!val; localStorage.setItem('app2:wakeLock', state.wakeLock ? '1' : '0'); if (els.wakeToggle) els.wakeToggle.checked = state.wakeLock;
+  if (state.wakeLock) { await requestWakeLock(); } else { await releaseWakeLock(); }
+}
+if (els.wakeToggle) els.wakeToggle.addEventListener('change', (e)=> applyWakeLock(e.target.checked));
+
+// Reacquire wake lock on visibility change if enabled
+document.addEventListener('visibilitychange', async ()=>{
+  if (document.visibilityState === 'visible' && state.wakeLock) { await requestWakeLock(); }
+});
 
 // Renderers
 function renderTreino(){
@@ -627,8 +680,11 @@ function render(){
     const savedAuto = localStorage.getItem('app2:autoAdvance') === '1';
     applyAutoAdvance(savedAuto);
     const savedVibrateStored = localStorage.getItem('app2:vibrate');
-    const savedVibrate = savedVibrateStored == null ? '1' : savedVibrateStored;
-    applyVibrate(savedVibrate === '1');
+    applyVibrate((savedVibrateStored == null ? '1' : savedVibrateStored) === '1');
+    const savedBeepStored = localStorage.getItem('app2:beep');
+    applyBeep((savedBeepStored == null ? '1' : savedBeepStored) === '1');
+    const savedWakeStored = localStorage.getItem('app2:wakeLock');
+    await applyWakeLock((savedWakeStored == null ? '0' : savedWakeStored) === '1');
     render();
   } catch (e) {
     console.error(e);
