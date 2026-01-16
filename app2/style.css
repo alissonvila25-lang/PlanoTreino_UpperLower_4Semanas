@@ -120,5 +120,9 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 /* Buttons polish */
 .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(15,118,110,0.5); }
 .btn:active { transform: translateY(1px); }
-.btn:disabled { opacity: 0.6; cursor: default; filter: grayscale(20%); }
+.btn:disabled { opacity: 0.6; cursor: default; filter: grayscale(12%); }
+.btn-success:disabled { background: #1ea298; border-color: #128d85; color: #f8fafc; opacity: 0.8; filter: none; }
+.btn-danger:disabled { background: #b45666; border-color: #8c3947; color: #fff; opacity: 0.8; filter: none; }
+.btn-secondary:disabled { background: #232c2c; border-color: #333d3d; color: var(--muted); opacity: 0.85; filter: none; }
+.light .btn-secondary:disabled { background: #eef2f7; border-color: #d7dee6; color: #6b7280; opacity: 0.9; filter: none; }
 .session-controls .btn-complete:hover { filter: brightness(1.05); }
