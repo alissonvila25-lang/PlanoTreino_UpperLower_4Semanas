@@ -703,7 +703,7 @@ function renderSessao(){
       const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
       btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; }); rowP.appendChild(btnReset);
       if (prepMin > 0 && doneP < prepMin) {
-        const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
+        const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-gold'; btnSkip.textContent = 'Ir para válida';
         btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; btnReset.disabled = n <= 0; const s = 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
         rowP.appendChild(btnSkip);
       }

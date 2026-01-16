@@ -27,11 +27,11 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .stage-row { display: flex; gap: 8px; align-items: center; }
 .stage-row { flex-wrap: wrap; }
 .stage-row .hint { flex: 1 1 180px; }
-.stage-row .btn { flex: 0 0 auto; }
+.stage-row .btn { flex: 0 0 auto; min-width: 140px; }
 @media (max-width: 768px) {
   .stage-row { gap: 6px; }
   .stage-row .hint { flex: 1 1 100%; }
-  .stage-row .btn { padding: 8px 10px; font-size: 14px; }
+  .stage-row .btn { padding: 10px 14px; font-size: 15px; min-width: 160px; }
 }
 .hint { font-size: 12px; color: var(--muted); }
 .inputs { display: grid; gap: 10px; margin-top: 8px; }
@@ -51,7 +51,10 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .light .btn-secondary { background: #e5e7eb; border-color: #cbd5e1; color: #101314; }
 .btn-danger { background: #a23b4c; border-color: #7a2634; color: #fff; }
 .btn-success { background: #198e84; border-color: #0f766e; color: #fff; }
+.btn-gold { background: #e8c158; border-color: #cfa64d; color: #101314; }
+.light .btn-gold { background: #f1d48a; border-color: #d8b764; color: #101314; }
 .btn-success:hover, .btn-danger:hover { filter: brightness(1.05); }
+.btn-gold:hover { filter: brightness(1.04); }
 .session-controls { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 16px; }
 .session-controls .btn-prev { justify-self: start; }
 .session-controls .btn-complete { justify-self: center; background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -138,6 +141,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .btn:disabled { opacity: 0.6; cursor: default; filter: grayscale(12%); }
 .btn-success:disabled { background: #1ea298; border-color: #128d85; color: #f8fafc; opacity: 0.8; filter: none; }
 .btn-danger:disabled { background: #b45666; border-color: #8c3947; color: #fff; opacity: 0.8; filter: none; }
+.btn-gold:disabled { background: #edd08e; border-color: #d2b469; color: #3b3b3b; opacity: 0.9; filter: none; }
 .btn-secondary:disabled { background: #232c2c; border-color: #333d3d; color: var(--muted); opacity: 0.85; filter: none; }
 .light .btn-secondary:disabled { background: #eef2f7; border-color: #d7dee6; color: #6b7280; opacity: 0.9; filter: none; }
 .session-controls .btn-complete:hover { filter: brightness(1.05); }
