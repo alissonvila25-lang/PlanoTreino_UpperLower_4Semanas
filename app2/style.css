@@ -22,6 +22,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .ex-header { display: flex; gap: 10px; align-items: center; }
 .ex-title h3 { margin: 0; font-size: 16px; }
 .meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.meta .badge { margin-left: 6px; }
 .stage { display: grid; gap: 8px; margin: 8px 0; }
 .stage-row { display: flex; gap: 8px; align-items: center; }
 .hint { font-size: 12px; color: var(--muted); }
@@ -62,6 +63,8 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-card .meta { margin-bottom: 8px; }
 /* Compact input heights for Session */
 .session-card .inputs-compact .input input { height: 34px; }
+/* Badge */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 1; background: var(--accent); color: #fff; border: 1px solid var(--accent); }
 @media (max-width: 520px) {
   .session-controls { grid-template-columns: 1fr; }
   .session-controls .btn-prev,

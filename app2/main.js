@@ -397,8 +397,9 @@ function renderResumo(){
     const h3 = document.createElement('h3'); h3.textContent = day; section.appendChild(h3);
     const items = byDay[day].sort((a,b)=> (a.ex._row||0) - (b.ex._row||0));
     for (const { ex, e } of items){
+      const pr = hasPR(ex._id, week);
       const p = document.createElement('div'); p.className = 'meta'; p.innerHTML = `
-        <span>${sanitize(ex.Exercicio)}</span>
+        <span>${sanitize(ex.Exercicio)} ${pr ? '<span class=\"badge\">PR</span>' : ''}</span>
         <span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>
         <span>${e.done ? 'Concluído' : 'Pendente'}</span>
         ${e.nota ? `<span>Obs: ${sanitize(e.nota)}</span>` : ''}
@@ -453,7 +454,11 @@ function renderSessao(){
   fill.style.width = `${Math.round(((state.session.index + 1)/state.session.list.length)*100)}%`;
   bar.appendChild(fill);
   const card = document.createElement('div'); card.className = 'card session-card';
-  const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
+  const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`;
+  if (hasPR(id, week)){
+    const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'PR'; b.style.marginLeft = '8px'; h3.appendChild(b);
+  }
+  card.appendChild(h3);
   // Imagem removida para evitar distração e bugs; podemos reativar depois
 
   // Meta badges
