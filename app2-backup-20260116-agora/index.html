@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plano Upper/Lower · 4 Semanas (app2 backup 20260116-agora)</title>
+  <link rel="stylesheet" href="./style.css?cb=agora" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Plano Upper/Lower · 4 Semanas</h1>
+    <div class="controls">
+      <button id="theme-toggle" class="chip">Tema</button>
+      <button id="header-timer" class="chip">Timer</button>
+      <label>Semana
+        <select id="week-select">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+      <label>Dia
+        <select id="day-select">
+          <option>Segunda</option>
+          <option>Terça</option>
+          <option>Quinta</option>
+          <option>Sábado</option>
+        </select>
+      </label>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn is-active" data-tab="treino">Treino</button>
+      <button class="tab-btn" data-tab="tecnicas">Técnicas</button>
+      <button class="tab-btn" data-tab="sessao">Sessão</button>
+      <button class="tab-btn" data-tab="resumo">Resumo</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="timer" class="timer">
+      <div class="timer-bar">
+        <div class="timer-display">00:00</div>
+        <div class="timer-actions">
+          <button id="timer-toggle" class="btn btn-large btn-primary">Controles</button>
+          <button id="timer-fullscreen" class="btn btn-large btn-primary">Tela cheia</button>
+        </div>
+      </div>
+      <div class="timer-panel" hidden>
+        <div class="timer-controls">
+          <button id="timer-start" class="btn">Start</button>
+          <button id="timer-pause" class="btn">Pause</button>
+          <button id="timer-reset" class="btn btn-danger">Reset</button>
+          <div class="timer-presets">
+            <button class="btn" data-seconds="120">2:00</button>
+            <button class="btn" data-seconds="90">1:30</button>
+            <button class="btn" data-seconds="60">1:00</button>
+          </div>
+          <button id="timer-apply-current-rest" class="btn">Pausa válida</button>
+        </div>
+      </div>
+    </section>
+    <section id="tab-treino" class="tab is-active">
+      <div id="exercise-list"></div>
+    </section>
+    <section id="tab-tecnicas" class="tab">
+      <div id="tech-list"></div>
+    </section>
+    <section id="tab-sessao" class="tab">
+      <div class="session-bar">
+        <span id="session-day"></span>
+        <span id="session-week"></span>
+        <span id="session-progress"></span>
+        <label><input id="session-auto-advance" type="checkbox" /> Avançar automaticamente</label>
+        <button id="session-start" class="btn btn-success">Iniciar sessão</button>
+        <button id="session-prev" class="btn btn-secondary" disabled>Anterior</button>
+        <button id="session-next" class="btn btn-secondary" disabled>Próximo</button>
+        <button id="session-end" class="btn btn-danger" disabled>Encerrar</button>
+        <button id="session-complete" class="btn btn-success" disabled>Concluir e Pausar</button>
+      </div>
+      <div id="session-body"></div>
+    </section>
+    <section id="tab-resumo" class="tab">
+      <div class="summary-bar">
+        <button id="summary-export" class="btn">Exportar dados</button>
+        <button id="summary-export-csv" class="btn">Exportar CSV</button>
+        <button id="summary-import" class="btn">Importar dados</button>
+         <label style="margin-left:12px; font-size:0.95em; display:inline-flex; align-items:center; gap:6px;">
+           <input type="checkbox" id="vibrate-toggle" />
+           Vibrar ao fim do timer
+         </label>
+         <label style="margin-left:12px; font-size:0.95em; display:inline-flex; align-items:center; gap:6px;">
+           <input type="checkbox" id="beep-toggle" />
+           Beep ao fim do timer
+         </label>
+         <label style="margin-left:12px; font-size:0.95em; display:inline-flex; align-items:center; gap:6px;">
+           <input type="checkbox" id="wakelock-toggle" />
+           Manter tela ligada
+         </label>
+      </div>
+      <div id="summary"></div>
+    </section>
+
+    
+  </main>
+
+  <script src="./main.js?cb=agora" defer></script>
+</body>
+</html>
