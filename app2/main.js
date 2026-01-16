@@ -7,6 +7,7 @@ const state = {
   session: { active: false, index: 0, list: [] },
   autoAdvance: false,
   theme: 'dark',
+  vibrate: true,
 };
 
 const els = {
@@ -37,21 +38,10 @@ const els = {
   timerReset: document.getElementById('timer-reset'),
   timerPresets: document.querySelectorAll('.timer-presets [data-seconds]'),
   timerApplyCurrent: document.getElementById('timer-apply-current-rest'),
+  vibrateToggle: document.getElementById('vibrate-toggle'),
   sessionAutoAdvance: document.getElementById('session-auto-advance'),
 };
 
-// Tabs
-const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-tabButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabButtons.forEach(b => b.classList.remove('is-active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('is-active'));
-    btn.classList.add('is-active');
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('is-active');
-    state.view = btn.dataset.tab;
-    render();
-  });
-});
 
 // Storage
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
@@ -251,7 +241,7 @@ async function loadCSVs(){
 let remaining = 0; let running = false; let rafId = 0; let lastTs = 0;
 function fmt(sec){ const s = Math.max(0, Math.round(sec)); const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}`; }
 function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); if (els.headerTimer) els.headerTimer.textContent = fmt(remaining); }
-function vibrate(pattern){ try { if (navigator && typeof navigator.vibrate === 'function') { navigator.vibrate(pattern || [250, 125, 250]); } } catch(e) { /* noop */ } }
+function vibrate(pattern){ if (!state.vibrate) return; try { if (navigator && typeof navigator.vibrate === 'function') { navigator.vibrate(pattern || [250, 125, 250]); } } catch(e) { /* noop */ } }
 function tick(ts){
   if(!running) return;
   if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt;
@@ -310,6 +300,10 @@ if (els.summaryImport) els.summaryImport.addEventListener('click', ()=>{
   input.addEventListener('change', ()=>{ if (input.files && input.files[0]) importDataFromFile(input.files[0]); });
   input.click();
 });
+
+// Vibrate preference toggle
+function applyVibrate(val){ state.vibrate = !!val; localStorage.setItem('app2:vibrate', state.vibrate ? '1' : '0'); if (els.vibrateToggle) els.vibrateToggle.checked = state.vibrate; }
+if (els.vibrateToggle) els.vibrateToggle.addEventListener('change', (e)=> applyVibrate(e.target.checked));
 
 // Renderers
 function renderTreino(){
@@ -617,6 +611,9 @@ function render(){
     applyTheme(savedTheme === 'light' ? 'light' : 'dark');
     const savedAuto = localStorage.getItem('app2:autoAdvance') === '1';
     applyAutoAdvance(savedAuto);
+    const savedVibrateStored = localStorage.getItem('app2:vibrate');
+    const savedVibrate = savedVibrateStored == null ? '1' : savedVibrateStored;
+    applyVibrate(savedVibrate === '1');
     render();
   } catch (e) {
     console.error(e);
