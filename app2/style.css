@@ -70,6 +70,9 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
   .session-controls .btn-prev,
   .session-controls .btn-next,
   .session-controls .btn-complete { justify-self: stretch; }
+  /* Timer inline no mobile para não sobrepor conteúdo */
+  .timer { position: static; right: auto; bottom: auto; margin-top: 8px; }
+  .timer-panel { width: 100%; position: static; }
 }
 /* Session title sizing */
 .session-card h3 { font-size: 18px; margin-top: 0; margin-bottom: 8px; }

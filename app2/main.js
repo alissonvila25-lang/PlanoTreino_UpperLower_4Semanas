@@ -269,7 +269,15 @@ function start(){ if(remaining<=0 || running) return; running = true; lastTs = 0
 function pause(){ running = false; cancelAnimationFrame(rafId); if (els.headerTimer) els.headerTimer.classList.remove('timer-running'); }
 function reset(){ pause(); remaining = 0; updateTimer(); if (els.headerTimer) els.headerTimer.classList.remove('timer-running'); }
 els.timerToggle.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
-if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
+if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{
+  els.timerPanel.hidden = !els.timerPanel.hidden;
+  if (!els.timerPanel.hidden && window.innerWidth <= 520) {
+    const wrap = document.getElementById('timer');
+    if (wrap && typeof wrap.scrollIntoView === 'function') {
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+});
 els.timerStart.addEventListener('click', start);
 els.timerPause.addEventListener('click', pause);
 els.timerReset.addEventListener('click', reset);
