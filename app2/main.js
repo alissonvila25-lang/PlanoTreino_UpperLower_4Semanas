@@ -810,7 +810,7 @@ function renderSessao(){
   const actionsCard = document.createElement('div'); actionsCard.className = 'actions session-controls';
   const btnPrev = document.createElement('button'); btnPrev.className = 'btn btn-prev'; btnPrev.textContent = 'Anterior'; btnPrev.disabled = state.session.index <= 0;
   btnPrev.addEventListener('click', () => { if (state.session.index > 0) { state.session.index--; renderSessao(); } });
-  const btnComplete = document.createElement('button'); btnComplete.className = 'btn btn-complete'; btnComplete.textContent = 'Concluir e Pausar';
+  const btnComplete = document.createElement('button'); btnComplete.className = 'btn btn-success'; btnComplete.textContent = 'Concluir e Pausar';
   btnComplete.addEventListener('click', () => {
     setEntry(id, week, 'done', '1');
     markPRIfAny(id, week, cargaEl.value);
