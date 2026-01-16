@@ -36,6 +36,7 @@ const els = {
   timerPause: document.getElementById('timer-pause'),
   timerReset: document.getElementById('timer-reset'),
   timerPresets: document.querySelectorAll('.timer-presets [data-seconds]'),
+  timerApplyCurrent: document.getElementById('timer-apply-current-rest'),
   sessionAutoAdvance: document.getElementById('session-auto-advance'),
 };
 
@@ -278,6 +279,15 @@ if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{
     }
   }
 });
+if (els.timerApplyCurrent) els.timerApplyCurrent.addEventListener('click', ()=>{
+  const ex = state.session && state.session.active ? state.session.list[state.session.index] : null;
+  let secs = 120;
+  if (ex) {
+    const m = String(ex.Pausa||'').match(/(\d+):(\d+)/);
+    if (m) secs = (parseInt(m[1],10)||0)*60 + (parseInt(m[2],10)||0);
+  }
+  setSeconds(secs); start(); els.timerPanel.hidden = false;
+});
 els.timerStart.addEventListener('click', start);
 els.timerPause.addEventListener('click', pause);
 els.timerReset.addEventListener('click', reset);
@@ -422,6 +432,7 @@ function renderSessao(){
   els.sessionWeek.textContent = `Semana ${state.week}`;
   els.sessionBody.innerHTML = '';
   if (!state.session.active){
+    if (els.timerApplyCurrent){ els.timerApplyCurrent.style.display = 'none'; }
     els.sessionBody.innerHTML = '<div class="card">Clique em "Iniciar sessão" para começar.</div>';
     els.sessionStart.disabled = false; els.sessionEnd.disabled = true;
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true;
@@ -450,6 +461,17 @@ function renderSessao(){
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true; return;
   }
   const ex = state.session.list[state.session.index];
+  if (els.timerApplyCurrent){
+    let label = 'Pausa válida (2:00)';
+    const mm = String(ex.Pausa||'').match(/(\d+):(\d+)/);
+    if (mm){
+      const mmv = String(mm[1]).padStart(1,'0');
+      const ssv = String(mm[2]).padStart(2,'0');
+      label = `Pausa válida (${mmv}:${ssv})`;
+    }
+    els.timerApplyCurrent.textContent = label;
+    els.timerApplyCurrent.style.display = '';
+  }
   const week = Number(state.week);
   const id = ex._id;
   const entry = getEntry(id, week);
