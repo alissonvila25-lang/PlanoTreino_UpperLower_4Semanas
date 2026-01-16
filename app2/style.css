@@ -68,6 +68,13 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-card .inputs-compact .input input { height: 34px; }
 /* Badge */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 1; background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+/* Calculadora de anilhas */
+.calc-wrap { margin-top: 8px; }
+.calc-panel { background: #0f1515; border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-top: 8px; }
+.calc-panel .row { display: grid; grid-template-columns: 140px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+.calc-panel label { font-size: 12px; color: var(--muted); }
+.calc-panel input, .calc-panel select { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.calc-panel .result { font-size: 13px; color: var(--text); }
 @media (max-width: 768px) {
   .session-controls { grid-template-columns: 1fr; }
   .session-controls .btn-prev,

@@ -69,6 +69,8 @@ function getEntry(id, week){
     carga: localStorage.getItem(keyFor(id,week,'carga')) || '',
     reps: localStorage.getItem(keyFor(id,week,'reps')) || '',
     done: localStorage.getItem(keyFor(id,week,'done')) === '1',
+    rpe: localStorage.getItem(keyFor(id,week,'rpe')) || '',
+    rir: localStorage.getItem(keyFor(id,week,'rir')) || '',
     nota: localStorage.getItem(keyFor(id,week,'nota')) || ''
   };
 }
@@ -480,12 +482,15 @@ function renderResumo(){
     const items = byDay[day].sort((a,b)=> (a.ex._row||0) - (b.ex._row||0));
     for (const { ex, e } of items){
       const pr = hasPR(ex._id, week);
-      const p = document.createElement('div'); p.className = 'meta'; p.innerHTML = `
-        <span>${sanitize(ex.Exercicio)} ${pr ? '<span class=\"badge\">PR</span>' : ''}</span>
-        <span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>
-        <span>${e.done ? 'Concluído' : 'Pendente'}</span>
-        ${e.nota ? `<span>Obs: ${sanitize(e.nota)}</span>` : ''}
-      `; section.appendChild(p);
+      const p = document.createElement('div'); p.className = 'meta';
+      const parts = [];
+      parts.push(`<span>${sanitize(ex.Exercicio)} ${pr ? '<span class=\"badge\">PR</span>' : ''}</span>`);
+      parts.push(`<span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>`);
+      if (e.rpe) parts.push(`<span>RPE: ${sanitize(e.rpe)}</span>`);
+      if (e.rir) parts.push(`<span>RIR: ${sanitize(e.rir)}</span>`);
+      parts.push(`<span>${e.done ? 'Concluído' : 'Pendente'}</span>`);
+      if (e.nota) parts.push(`<span>Obs: ${sanitize(e.nota)}</span>`);
+      p.innerHTML = parts.join(''); section.appendChild(p);
     }
     els.summary.appendChild(section);
   });
@@ -609,7 +614,101 @@ function renderSessao(){
   const repsEl = document.createElement('input'); repsEl.type = 'text'; repsEl.placeholder = repsCsv || 'ex: 6-8'; repsEl.value = entry.reps || '';
   repsEl.addEventListener('change', ()=> setEntry(id, week, 'reps', repsEl.value)); inputReps.appendChild(repsEl);
   inputs.appendChild(inputCarga); inputs.appendChild(inputReps);
+  // RPE/RIR opcionais
+  const inputRpe = document.createElement('div'); inputRpe.className = 'input'; inputRpe.innerHTML = `<label>RPE (0-10)</label>`;
+  const rpeEl = document.createElement('input'); rpeEl.type = 'number'; rpeEl.min = '0'; rpeEl.max = '10'; rpeEl.step = '0.5'; rpeEl.placeholder = 'ex: 8'; rpeEl.value = entry.rpe || '';
+  rpeEl.addEventListener('change', ()=> setEntry(id, week, 'rpe', rpeEl.value)); inputRpe.appendChild(rpeEl);
+  const inputRir = document.createElement('div'); inputRir.className = 'input'; inputRir.innerHTML = `<label>RIR (0-5)</label>`;
+  const rirEl = document.createElement('input'); rirEl.type = 'number'; rirEl.min = '0'; rirEl.max = '5'; rirEl.step = '1'; rirEl.placeholder = 'ex: 2'; rirEl.value = entry.rir || '';
+  rirEl.addEventListener('change', ()=> setEntry(id, week, 'rir', rirEl.value)); inputRir.appendChild(rirEl);
+  inputs.appendChild(inputRpe); inputs.appendChild(inputRir);
   card.appendChild(inputs);
+
+  // Calculadora de anilhas
+  const calcWrap = document.createElement('div'); calcWrap.className = 'calc-wrap';
+  const calcBtn = document.createElement('button'); calcBtn.className = 'btn btn-small'; calcBtn.textContent = 'Calc. anilhas';
+  const calcPanel = document.createElement('div'); calcPanel.className = 'calc-panel'; calcPanel.hidden = true;
+  const prefUnits = (localStorage.getItem('app2:units') || 'kg').toLowerCase() === 'lb' ? 'lb' : 'kg';
+  const prefBar = parseFloat(localStorage.getItem('app2:barWeight') || (prefUnits==='kg'? '20':'45')) || (prefUnits==='kg'?20:45);
+  const prefPlates = (localStorage.getItem('app2:plates') || (prefUnits==='kg' ? '20,15,10,5,2.5,1.25' : '45,35,25,10,5,2.5'));
+  calcPanel.innerHTML = `
+    <div class="row">
+      <label>Unidades</label>
+      <select class="calc-units">
+        <option value="kg" ${prefUnits==='kg'?'selected':''}>kg</option>
+        <option value="lb" ${prefUnits==='lb'?'selected':''}>lb</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Peso da barra</label>
+      <input type="number" class="calc-bar" value="${prefBar}" step="0.25" />
+    </div>
+    <div class="row">
+      <label>Placas (maior→menor)</label>
+      <input type="text" class="calc-plates" value="${prefPlates}" />
+    </div>
+    <div class="row">
+      <button class="btn btn-small calc-run">Calcular</button>
+    </div>
+    <div class="result"></div>
+  `;
+  function parseNumberWithUnit(str){
+    const s = String(str||'').trim();
+    const m = s.match(/([0-9]+(?:\.[0-9]+)?)(?:\s*(kg|lb))?/i);
+    if (!m) return { value: NaN, unit: prefUnits };
+    const v = parseFloat(m[1]);
+    const u = (m[2]||prefUnits).toLowerCase();
+    return { value: v, unit: (u==='lb'?'lb':'kg') };
+  }
+  function toUnits(value, from, to){
+    if (isNaN(value)) return NaN;
+    if (from === to) return value;
+    // 1 kg = 2.20462262 lb
+    return to==='kg' ? (value / 2.20462262) : (value * 2.20462262);
+  }
+  function computePlates(total, bar, sizes){
+    const perSide = (total - bar)/2;
+    if (perSide <= 0) return { perSide, list: [], remainder: 0 };
+    const list = [];
+    let rem = perSide;
+    for (const sz of sizes){
+      const cnt = Math.floor((rem + 1e-9) / sz);
+      if (cnt > 0){ list.push({ size: sz, count: cnt }); rem -= cnt * sz; }
+    }
+    return { perSide, list, remainder: rem };
+  }
+  function runCalc(){
+    const resEl = calcPanel.querySelector('.result');
+    const unitsSel = calcPanel.querySelector('.calc-units');
+    const barEl = calcPanel.querySelector('.calc-bar');
+    const platesEl = calcPanel.querySelector('.calc-plates');
+    const units = unitsSel.value;
+    const bar = parseFloat(barEl.value)||0;
+    const sizes = String(platesEl.value||'').split(',').map(s=>parseFloat(s.trim())).filter(v=>!isNaN(v)).sort((a,b)=>b-a);
+    localStorage.setItem('app2:units', units);
+    localStorage.setItem('app2:barWeight', String(bar));
+    localStorage.setItem('app2:plates', sizes.join(','));
+    const parsed = parseNumberWithUnit(cargaEl.value);
+    let target = parsed.value;
+    let targetUnits = parsed.unit;
+    if (isNaN(target)) { resEl.textContent = 'Informe a carga (ex: 60, 60kg, 135lb).'; return; }
+    // converte alvo para unidades das preferências da calculadora
+    target = toUnits(target, targetUnits, units);
+    const { perSide, list, remainder } = computePlates(target, bar, sizes);
+    const tol = units==='kg' ? 0.1 : 0.25;
+    const lines = [];
+    lines.push(`Alvo: ${target.toFixed(2)} ${units} | Barra: ${bar} ${units} | Por lado: ${perSide.toFixed(2)} ${units}`);
+    if (perSide <= 0){ resEl.textContent = 'Alvo menor ou igual ao peso da barra.'; return; }
+    if (!list.length){ resEl.textContent = 'Nenhuma placa aplicável.'; return; }
+    const parts = list.map(it=> `${it.size}×${it.count}`);
+    lines.push(`Por lado: ${parts.join(' + ')}`);
+    if (remainder > tol){ lines.push(`Restante não coberto: ${remainder.toFixed(2)} ${units}`); }
+    resEl.innerHTML = lines.map(l=>`<div>${l}</div>`).join('');
+  }
+  calcPanel.querySelector('.calc-run').addEventListener('click', runCalc);
+  calcBtn.addEventListener('click', ()=>{ calcPanel.hidden = !calcPanel.hidden; if (!calcPanel.hidden) runCalc(); });
+  calcWrap.appendChild(calcBtn); calcWrap.appendChild(calcPanel);
+  card.appendChild(calcWrap);
 
   // Controles de navegação dentro do card
   const actionsCard = document.createElement('div'); actionsCard.className = 'actions session-controls';
