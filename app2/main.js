@@ -384,12 +384,20 @@ if (els.timerFull) {
   const timerEl = document.getElementById('timer');
   els.timerFull.addEventListener('click', async ()=>{
     try {
-      if (!document.fullscreenElement) {
-        if (timerEl && timerEl.requestFullscreen) await timerEl.requestFullscreen({ navigationUI: 'hide' });
+      if (!document.fullscreenElement && timerEl && typeof timerEl.requestFullscreen === 'function') {
+        await timerEl.requestFullscreen({ navigationUI: 'hide' });
+      } else if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+        await document.exitFullscreen();
       } else {
-        if (document.exitFullscreen) await document.exitFullscreen();
+        // Fallback: toggle immersive class
+        const active = timerEl.classList.toggle('timer-immersive');
+        els.timerFull.textContent = active ? 'Sair da tela cheia' : 'Tela cheia';
       }
     } catch(e) { /* noop */ }
+  });
+  document.addEventListener('fullscreenchange', ()=>{
+    const active = !!document.fullscreenElement;
+    els.timerFull.textContent = active ? 'Sair da tela cheia' : 'Tela cheia';
   });
 }
 

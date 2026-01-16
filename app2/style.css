@@ -55,6 +55,11 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 #timer:fullscreen .timer-bar { justify-content: center; }
 #timer:fullscreen .timer-display { font-size: 24vmin; line-height: 1; text-align: center; }
 #timer:fullscreen .timer-panel { max-width: 720px; margin: 12px auto 0; }
+/* Immersive (fallback for iOS) */
+.timer-immersive { position: fixed; inset: 0; z-index: 999; background: var(--bg); padding: 16px; overflow: auto; }
+.timer-immersive .timer-bar { justify-content: center; }
+.timer-immersive .timer-display { font-size: 24vmin; line-height: 1; text-align: center; }
+.timer-immersive .timer-panel { max-width: 720px; margin: 12px auto 0; }
 .chart { display: grid; gap: 10px; }
 .chart-row { display: grid; grid-template-columns: 32px 1fr 32px; gap: 8px; align-items: center; }
 .chart-bar-wrap { background: #0f1515; border: 1px solid var(--border); border-radius: 10px; height: 16px; }
