@@ -488,7 +488,7 @@ function renderSessao(){
       const row = document.createElement('div'); row.className = 'stage-row';
       const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`; row.appendChild(hint);
       const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
-      btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; });
+      btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; reset.disabled = n <= 0; });
       row.appendChild(btn);
       const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
       reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
@@ -502,13 +502,13 @@ function renderSessao(){
       const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
       hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`; rowP.appendChild(hintP);
       const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
-      btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; });
+      btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; btnReset.disabled = n <= 0; });
       rowP.appendChild(btnDone);
       const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
       btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; }); rowP.appendChild(btnReset);
       if (prepMin > 0 && doneP < prepMin) {
         const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
-        btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
+        btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; btnReset.disabled = n <= 0; const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
         rowP.appendChild(btnSkip);
       }
       stage.appendChild(rowP);

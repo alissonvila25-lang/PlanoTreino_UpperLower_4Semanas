@@ -21,7 +21,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 10px 0; }
 .ex-header { display: flex; gap: 10px; align-items: center; }
 .ex-title h3 { margin: 0; font-size: 16px; }
-.meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.meta { display: grid; gap: 8px; font-size: 13px; line-height: 1.35; color: var(--muted); }
 .meta .badge { margin-left: 6px; }
 .stage { display: grid; gap: 8px; margin: 8px 0; }
 .stage-row { display: flex; gap: 8px; align-items: center; }
@@ -60,7 +60,8 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 /* Sessão card width */
 .session-card { max-width: 720px; margin: 0 auto; }
 /* Spacing between meta and controls in Session */
-.session-card .meta { margin-bottom: 8px; }
+.session-card .meta { margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.session-card .meta span + span::before { content: '•'; margin: 0 6px 0 2px; color: var(--muted); }
 /* Compact input heights for Session */
 .session-card .inputs-compact .input input { height: 34px; }
 /* Badge */
