@@ -40,7 +40,7 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:hover { border-color: var(--accent); }
 .btn-danger { background: #dc2626; border-color: #b91c1c; color: #fff; }
-.btn-success { background: #22c55e; border-color: #16a34a; color: #052e16; }
+.btn-success { background: #22c55e; border-color: #16a34a; color: #fff; }
 .session-controls { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 16px; }
 .session-controls .btn-prev { justify-self: start; }
 .session-controls .btn-complete { justify-self: center; background: var(--accent); border-color: var(--accent); color: #fff; }

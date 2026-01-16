@@ -688,7 +688,7 @@ function renderSessao(){
       const hintP = document.createElement('span'); hintP.className = 'hint';
       const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
       hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`; rowP.appendChild(hintP);
-      const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
+      const btnDone = document.createElement('button'); btnDone.className = 'btn btn-success'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
       btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const s = 90; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; btnReset.disabled = n <= 0; });
       rowP.appendChild(btnDone);
       const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
