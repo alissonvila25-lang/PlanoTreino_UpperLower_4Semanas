@@ -78,7 +78,11 @@ function setEntry(id, week, field, value){ localStorage.setItem(keyFor(id,week,f
 function listAllStateKeys(){ const keys = []; for (let i=0; i<localStorage.length; i++){ const k = localStorage.key(i); if (k && k.startsWith('app2:')) keys.push(k); } return keys; }
 function exportData(){
   const data = { version: 1, exportedAt: new Date().toISOString(), entries: {} };
-  for (const k of listAllStateKeys()) data.entries[k] = localStorage.getItem(k);
+  for (const k of listAllStateKeys()) {
+    // Excluir campos opcionais de RPE/RIR do export JSON
+    if (/:S\d+:(rpe|rir)$/i.test(k)) continue;
+    data.entries[k] = localStorage.getItem(k);
+  }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'app2-dados.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
