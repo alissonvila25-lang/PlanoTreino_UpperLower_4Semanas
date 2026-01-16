@@ -107,6 +107,10 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
   .session-controls .btn-complete { justify-self: stretch; }
   .timer { top: 0; }
   .timer-panel { width: 100%; position: static; }
+  /* Empilhar ações do timer acima do tempo em telas menores */
+  .timer .timer-bar { flex-direction: column; align-items: center; gap: 8px; }
+  .timer .timer-actions { order: 1; }
+  .timer .timer-display { order: 2; }
 }
 /* Session title sizing */
 .session-card h3 { font-size: 18px; margin-top: 0; margin-bottom: 8px; }
