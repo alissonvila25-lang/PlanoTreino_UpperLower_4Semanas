@@ -267,23 +267,40 @@ async function loadCSVs(){
 let remaining = 0; let running = false; let rafId = 0; let lastTs = 0;
 function fmt(sec){ const s = Math.max(0, Math.round(sec)); const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}`; }
 function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); if (els.headerTimer) els.headerTimer.textContent = fmt(remaining); }
-function vibrate(pattern){ if (!state.vibrate) return; try { if (navigator && typeof navigator.vibrate === 'function') { navigator.vibrate(pattern || [250, 125, 250]); } } catch(e) { /* noop */ } }
+function vibrate(pattern){
+  if (!state.vibrate) return;
+  try {
+    if (navigator && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern || [250, 125, 250]);
+    } else {
+      const bar = document.querySelector('.timer');
+      if (bar) { bar.classList.add('timer-pulse'); setTimeout(()=> bar.classList.remove('timer-pulse'), 800); }
+    }
+  } catch(e) { /* noop */ }
+}
+let audioCtx = null;
+async function initAudio(){
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+  } catch(e) { /* noop */ }
+}
 function beep(){
   if (!state.beep) return;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') return; // requires prior user gesture
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
     o.type = 'sine';
-    o.frequency.value = 880; // A5
-    o.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0.001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
-    o.start();
-    // fade out
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
-    o.stop(ctx.currentTime + 0.3);
-    o.onended = () => ctx.close();
+    o.frequency.value = 880;
+    o.connect(g); g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.2, t + 0.02);
+    o.start(t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    o.stop(t + 0.32);
   } catch(e) { /* noop */ }
 }
 function tick(ts){
@@ -328,6 +345,14 @@ if (els.timerApplyCurrent) els.timerApplyCurrent.addEventListener('click', ()=>{
 els.timerStart.addEventListener('click', start);
 els.timerPause.addEventListener('click', pause);
 els.timerReset.addEventListener('click', reset);
+// Initialize audio on user interactions (iOS requirement)
+['click','touchstart'].forEach(evt=>{
+  els.timerStart.addEventListener(evt, initAudio, { passive: true });
+  els.timerPause.addEventListener(evt, initAudio, { passive: true });
+  els.timerReset.addEventListener(evt, initAudio, { passive: true });
+  const fsBtn = document.getElementById('timer-fullscreen');
+  if (fsBtn) fsBtn.addEventListener(evt, initAudio, { passive: true });
+});
 // Editable presets: load, apply and edit via long-press
 const defaultPresets = [120, 90, 60];
 function loadPresets(){
