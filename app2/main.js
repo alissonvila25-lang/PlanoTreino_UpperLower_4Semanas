@@ -579,16 +579,17 @@ function renderResumo(){
     const items = byDay[day].sort((a,b)=> (a.ex._row||0) - (b.ex._row||0));
     for (const { ex, e } of items){
       const pr = hasPR(ex._id, week);
-      let prReason = '';
+      let prRepsBadge = '';
       if (pr) {
         const nowL = parseLoad(e.carga); const nowR = parseReps(e.reps);
         const best = bestPreviousLoadAndReps(ex._id, week);
-        if (!best.load || (nowL && best && nowL.value > best.load)) prReason = 'PR por carga';
-        else if (nowL && best && nowL.value === best.load && nowR != null && best.reps != null && nowR > best.reps) prReason = 'PR por reps';
+        if (nowL && best && nowL.value === best.load && nowR != null && best.reps != null && nowR > best.reps) {
+          prRepsBadge = '<span class=\"badge-secondary\" style=\"margin-left:6px;\">reps+</span>';
+        }
       }
       const p = document.createElement('div'); p.className = 'meta';
       const parts = [];
-      parts.push(`<span>${sanitize(ex.Exercicio)} ${pr ? '<span class=\"badge\">PR</span>' : ''} ${pr && prReason ? `<span style=\"margin-left:6px;color:var(--muted);font-weight:600;\">(${prReason})</span>` : ''}</span>`);
+      parts.push(`<span>${sanitize(ex.Exercicio)} ${pr ? '<span class=\"badge\">PR</span>' : ''} ${pr ? prRepsBadge : ''}</span>`);
       parts.push(`<span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>`);
       if (e.rpe) parts.push(`<span>RPE: ${sanitize(e.rpe)}</span>`);
       if (e.rir) parts.push(`<span>RIR: ${sanitize(e.rir)}</span>`);

@@ -28,6 +28,11 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .stage-row { flex-wrap: wrap; }
 .stage-row .hint { flex: 1 1 180px; }
 .stage-row .btn { flex: 0 0 auto; }
+@media (max-width: 768px) {
+  .stage-row { gap: 6px; }
+  .stage-row .hint { flex: 1 1 100%; }
+  .stage-row .btn { padding: 8px 10px; font-size: 14px; }
+}
 .hint { font-size: 12px; color: var(--muted); }
 .inputs { display: grid; gap: 10px; margin-top: 8px; }
 .inputs-compact { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -99,6 +104,8 @@ main { padding: 16px; max-width: 960px; margin: 0 auto; }
 .session-card .inputs-compact .input input { height: 34px; }
 /* Badge */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 1; background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.badge-secondary { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 1; background: #1b2323; color: var(--text); border: 1px solid var(--border); }
+.light .badge-secondary { background: #eef2f7; color: #101314; border-color: #cbd5e1; }
 /* Calculadora de anilhas */
 .calc-wrap { margin-top: 8px; }
 .calc-panel { background: #0f1515; border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-top: 8px; }
