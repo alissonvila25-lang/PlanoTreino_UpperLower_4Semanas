@@ -7,6 +7,9 @@ const state = {
   session: { active: false, index: 0, list: [] },
   autoAdvance: false,
   theme: 'dark',
+  vibrate: true,
+  beep: true,
+  wakeLock: false,
 };
 
 const els = {
@@ -36,21 +39,28 @@ const els = {
   timerPause: document.getElementById('timer-pause'),
   timerReset: document.getElementById('timer-reset'),
   timerPresets: document.querySelectorAll('.timer-presets [data-seconds]'),
+  timerApplyCurrent: document.getElementById('timer-apply-current-rest'),
+  vibrateToggle: document.getElementById('vibrate-toggle'),
+  beepToggle: document.getElementById('beep-toggle'),
+  wakeToggle: document.getElementById('wakelock-toggle'),
   sessionAutoAdvance: document.getElementById('session-auto-advance'),
 };
 
-// Tabs
+// Navegação entre abas
 const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
 tabButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     tabButtons.forEach(b => b.classList.remove('is-active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('is-active'));
     btn.classList.add('is-active');
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('is-active');
+    const targetId = `tab-${btn.dataset.tab}`;
+    const target = document.getElementById(targetId);
+    if (target) target.classList.add('is-active');
     state.view = btn.dataset.tab;
     render();
   });
 });
+
 
 // Storage
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
@@ -250,11 +260,33 @@ async function loadCSVs(){
 let remaining = 0; let running = false; let rafId = 0; let lastTs = 0;
 function fmt(sec){ const s = Math.max(0, Math.round(sec)); const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}`; }
 function updateTimer(){ els.timerDisplay.textContent = fmt(remaining); if (els.headerTimer) els.headerTimer.textContent = fmt(remaining); }
+function vibrate(pattern){ if (!state.vibrate) return; try { if (navigator && typeof navigator.vibrate === 'function') { navigator.vibrate(pattern || [250, 125, 250]); } } catch(e) { /* noop */ } }
+function beep(){
+  if (!state.beep) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880; // A5
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+    o.start();
+    // fade out
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+    o.stop(ctx.currentTime + 0.3);
+    o.onended = () => ctx.close();
+  } catch(e) { /* noop */ }
+}
 function tick(ts){
   if(!running) return;
   if(!lastTs) lastTs = ts; const dt = (ts-lastTs)/1000; lastTs = ts; remaining -= dt;
   if(remaining<=0){
     remaining=0; running=false; updateTimer(); cancelAnimationFrame(rafId);
+    if (els.headerTimer) els.headerTimer.classList.remove('timer-running');
+    vibrate([200,100,200]);
+    beep();
     // Auto-avançar ao terminar o timer, se ativo na Sessão
     if (state.view === 'sessao' && state.session.active && state.autoAdvance) {
       if (state.session.index < state.session.list.length - 1) { state.session.index++; renderSessao(); }
@@ -264,11 +296,28 @@ function tick(ts){
   updateTimer(); rafId = requestAnimationFrame(tick);
 }
 function setSeconds(s){ remaining = s; updateTimer(); }
-function start(){ if(remaining<=0 || running) return; running = true; lastTs = 0; cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick); }
-function pause(){ running = false; cancelAnimationFrame(rafId); }
-function reset(){ pause(); remaining = 0; updateTimer(); }
+function start(){ if(remaining<=0 || running) return; running = true; lastTs = 0; cancelAnimationFrame(rafId); if (els.headerTimer) els.headerTimer.classList.add('timer-running'); rafId = requestAnimationFrame(tick); }
+function pause(){ running = false; cancelAnimationFrame(rafId); if (els.headerTimer) els.headerTimer.classList.remove('timer-running'); }
+function reset(){ pause(); remaining = 0; updateTimer(); if (els.headerTimer) els.headerTimer.classList.remove('timer-running'); }
 els.timerToggle.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
-if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{ els.timerPanel.hidden = !els.timerPanel.hidden; });
+if (els.headerTimer) els.headerTimer.addEventListener('click', ()=>{
+  els.timerPanel.hidden = !els.timerPanel.hidden;
+  if (!els.timerPanel.hidden && window.innerWidth <= 520) {
+    const wrap = document.getElementById('timer');
+    if (wrap && typeof wrap.scrollIntoView === 'function') {
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+});
+if (els.timerApplyCurrent) els.timerApplyCurrent.addEventListener('click', ()=>{
+  const ex = state.session && state.session.active ? state.session.list[state.session.index] : null;
+  let secs = 120;
+  if (ex) {
+    const m = String(ex.Pausa||'').match(/(\d+):(\d+)/);
+    if (m) secs = (parseInt(m[1],10)||0)*60 + (parseInt(m[2],10)||0);
+  }
+  setSeconds(secs); start(); els.timerPanel.hidden = false;
+});
 els.timerStart.addEventListener('click', start);
 els.timerPause.addEventListener('click', pause);
 els.timerReset.addEventListener('click', reset);
@@ -290,10 +339,46 @@ if (els.summaryImport) els.summaryImport.addEventListener('click', ()=>{
   input.click();
 });
 
+// Vibrate preference toggle
+function applyVibrate(val){ state.vibrate = !!val; localStorage.setItem('app2:vibrate', state.vibrate ? '1' : '0'); if (els.vibrateToggle) els.vibrateToggle.checked = state.vibrate; }
+if (els.vibrateToggle) els.vibrateToggle.addEventListener('change', (e)=> applyVibrate(e.target.checked));
+
+// Beep preference toggle
+function applyBeep(val){ state.beep = !!val; localStorage.setItem('app2:beep', state.beep ? '1' : '0'); if (els.beepToggle) els.beepToggle.checked = state.beep; }
+if (els.beepToggle) els.beepToggle.addEventListener('change', (e)=> applyBeep(e.target.checked));
+
+// Wake Lock preference toggle
+let wakeLockSentinel = null;
+async function requestWakeLock(){
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      wakeLockSentinel.addEventListener('release', ()=>{ /* released */ });
+    }
+  } catch(e) {
+    // Could be disallowed or unsupported
+  }
+}
+async function releaseWakeLock(){
+  try { if (wakeLockSentinel) { await wakeLockSentinel.release(); wakeLockSentinel = null; } } catch(e) {}
+}
+async function applyWakeLock(val){
+  state.wakeLock = !!val; localStorage.setItem('app2:wakeLock', state.wakeLock ? '1' : '0'); if (els.wakeToggle) els.wakeToggle.checked = state.wakeLock;
+  if (state.wakeLock) { await requestWakeLock(); } else { await releaseWakeLock(); }
+}
+if (els.wakeToggle) els.wakeToggle.addEventListener('change', (e)=> applyWakeLock(e.target.checked));
+
+// Reacquire wake lock on visibility change if enabled
+document.addEventListener('visibilitychange', async ()=>{
+  if (document.visibilityState === 'visible' && state.wakeLock) { await requestWakeLock(); }
+});
+
 // Renderers
 function renderTreino(){
   const week = Number(state.week);
-  const list = state.plan.filter(x => sanitize(x.Dia) === state.day);
+  const list = state.plan
+    .filter(x => sanitize(x.Dia) === state.day)
+    .sort((a,b)=> (a._row||0) - (b._row||0));
   els.exerciseList.innerHTML = '';
   if (!list.length){ els.exerciseList.innerHTML = '<div class="card">Nenhum exercício para o dia selecionado.</div>'; return; }
   for (const ex of list){
@@ -384,13 +469,19 @@ function renderResumo(){
   els.summary.appendChild(chartCard);
 
   const byDay = {};
-  for (const ex of state.plan){ const id = ex._id; const day = sanitize(ex.Dia); const e = getEntry(id, week); if (!byDay[day]) byDay[day] = []; if (e.carga || e.reps || e.done || e.nota){ byDay[day].push({ ex, e }); } }
+  for (const ex of state.plan){
+    const id = ex._id; const day = sanitize(ex.Dia); const e = getEntry(id, week);
+    if (!byDay[day]) byDay[day] = [];
+    if (e.carga || e.reps || e.done || e.nota){ byDay[day].push({ ex, e }); }
+  }
   Object.keys(byDay).forEach(day => {
     const section = document.createElement('div'); section.className = 'card';
     const h3 = document.createElement('h3'); h3.textContent = day; section.appendChild(h3);
-    for (const { ex, e } of byDay[day]){
+    const items = byDay[day].sort((a,b)=> (a.ex._row||0) - (b.ex._row||0));
+    for (const { ex, e } of items){
+      const pr = hasPR(ex._id, week);
       const p = document.createElement('div'); p.className = 'meta'; p.innerHTML = `
-        <span>${sanitize(ex.Exercicio)}</span>
+        <span>${sanitize(ex.Exercicio)} ${pr ? '<span class=\"badge\">PR</span>' : ''}</span>
         <span>S${week} · Carga: ${e.carga || '-'} · Reps: ${e.reps || '-'}</span>
         <span>${e.done ? 'Concluído' : 'Pendente'}</span>
         ${e.nota ? `<span>Obs: ${sanitize(e.nota)}</span>` : ''}
@@ -405,6 +496,7 @@ function renderSessao(){
   els.sessionWeek.textContent = `Semana ${state.week}`;
   els.sessionBody.innerHTML = '';
   if (!state.session.active){
+    if (els.timerApplyCurrent){ els.timerApplyCurrent.style.display = 'none'; }
     els.sessionBody.innerHTML = '<div class="card">Clique em "Iniciar sessão" para começar.</div>';
     els.sessionStart.disabled = false; els.sessionEnd.disabled = true;
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true;
@@ -433,6 +525,17 @@ function renderSessao(){
     els.sessionPrev.disabled = true; els.sessionNext.disabled = true; els.sessionComplete.disabled = true; return;
   }
   const ex = state.session.list[state.session.index];
+  if (els.timerApplyCurrent){
+    let label = 'Pausa válida (2:00)';
+    const mm = String(ex.Pausa||'').match(/(\d+):(\d+)/);
+    if (mm){
+      const mmv = String(mm[1]).padStart(1,'0');
+      const ssv = String(mm[2]).padStart(2,'0');
+      label = `Pausa válida (${mmv}:${ssv})`;
+    }
+    els.timerApplyCurrent.textContent = label;
+    els.timerApplyCurrent.style.display = '';
+  }
   const week = Number(state.week);
   const id = ex._id;
   const entry = getEntry(id, week);
@@ -445,7 +548,11 @@ function renderSessao(){
   fill.style.width = `${Math.round(((state.session.index + 1)/state.session.list.length)*100)}%`;
   bar.appendChild(fill);
   const card = document.createElement('div'); card.className = 'card session-card';
-  const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`; card.appendChild(h3);
+  const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`;
+  if (hasPR(id, week)){
+    const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'PR'; b.style.marginLeft = '8px'; h3.appendChild(b);
+  }
+  card.appendChild(h3);
   // Imagem removida para evitar distração e bugs; podemos reativar depois
 
   // Meta badges
@@ -467,7 +574,7 @@ function renderSessao(){
       const row = document.createElement('div'); row.className = 'stage-row';
       const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`; row.appendChild(hint);
       const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Concluir aquecimento'; btn.disabled = done >= warmupTarget;
-      btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; });
+      btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const s = 60; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; reset.disabled = n <= 0; });
       row.appendChild(btn);
       const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.textContent = 'Reset aquec.'; reset.disabled = done <= 0;
       reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
@@ -481,13 +588,13 @@ function renderSessao(){
       const targetLabel = (prepMin && prepMax && prepMin !== prepMax) ? `${prepMin}-${prepMax}` : String(prepMax);
       hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`; rowP.appendChild(hintP);
       const btnDone = document.createElement('button'); btnDone.className = 'btn'; btnDone.textContent = 'Concluir preparatória'; btnDone.disabled = doneP >= prepMax;
-      btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; });
+      btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const s = 90; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; btnReset.disabled = n <= 0; });
       rowP.appendChild(btnDone);
       const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.textContent = 'Reset prep.'; btnReset.disabled = doneP <= 0;
       btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; }); rowP.appendChild(btnReset);
       if (prepMin > 0 && doneP < prepMin) {
         const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-danger'; btnSkip.textContent = 'Ir para válida';
-        btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; const m = String(ex.Pausa||'').match(/(\d+):(\d+)/); const s = m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
+        btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; btnReset.disabled = n <= 0; const s = 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
         rowP.appendChild(btnSkip);
       }
       stage.appendChild(rowP);
@@ -572,6 +679,12 @@ function render(){
     applyTheme(savedTheme === 'light' ? 'light' : 'dark');
     const savedAuto = localStorage.getItem('app2:autoAdvance') === '1';
     applyAutoAdvance(savedAuto);
+    const savedVibrateStored = localStorage.getItem('app2:vibrate');
+    applyVibrate((savedVibrateStored == null ? '1' : savedVibrateStored) === '1');
+    const savedBeepStored = localStorage.getItem('app2:beep');
+    applyBeep((savedBeepStored == null ? '1' : savedBeepStored) === '1');
+    const savedWakeStored = localStorage.getItem('app2:wakeLock');
+    await applyWakeLock((savedWakeStored == null ? '0' : savedWakeStored) === '1');
     render();
   } catch (e) {
     console.error(e);
