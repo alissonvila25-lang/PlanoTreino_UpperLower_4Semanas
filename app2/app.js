@@ -359,16 +359,6 @@ function suggestNextLoad(prev){
 function renderTreino() {
 	const week = Number(state.week);
 	const day = state.day;
-// Melhor PR atual (até a semana selecionada)
-function bestLoad(exId, uptoWeek) {
-	let best = null;
-	let bestWeek = 0;
-	for (let w = 1; w <= uptoWeek; w++) {
-		const p = parseLoad(getEntry(exId, w).carga);
-		if (p && (!best || p.value > best.value)) { best = p; bestWeek = w; }
-	}
-	return best ? { value: best.value, unit: best.unit, week: bestWeek } : null;
-}
 	const list = state.plan.filter(x => sanitize(x.Dia) === day);
 	els.exerciseList.innerHTML = '';
 	if (!list.length) {
@@ -728,6 +718,17 @@ function markPRIfAny(exId, week, cargaStr) {
 }
 
 function hasPR(exId, week) { return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
+
+// Melhor PR atual (até a semana selecionada)
+function bestLoad(exId, uptoWeek) {
+	let best = null;
+	let bestWeek = 0;
+	for (let w = 1; w <= uptoWeek; w++) {
+		const p = parseLoad(getEntry(exId, w).carga);
+		if (p && (!best || p.value > best.value)) { best = p; bestWeek = w; }
+	}
+	return best ? { value: best.value, unit: best.unit, week: bestWeek } : null;
+}
 
 // Série helpers: aquecimento e preparatórias
 function parseSeriesMeta(seriesBase){
