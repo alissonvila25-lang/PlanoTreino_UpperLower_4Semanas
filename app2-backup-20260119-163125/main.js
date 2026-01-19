@@ -426,6 +426,21 @@ if (els.timerFull) {
   });
 }
 
+// Helper: abre tela cheia do timer automaticamente (quando há gesto do usuário)
+async function openTimerFullscreen(){
+  try {
+    const timerEl = document.getElementById('timer');
+    if (document.fullscreenElement) return; // já em tela cheia
+    if (timerEl && typeof timerEl.requestFullscreen === 'function') {
+      await timerEl.requestFullscreen({ navigationUI: 'hide' });
+    } else if (timerEl) {
+      // Fallback para ambientes sem Fullscreen API
+      timerEl.classList.add('timer-immersive');
+      if (els.timerFull) els.timerFull.textContent = 'Sair da tela cheia';
+    }
+  } catch(e) { /* noop */ }
+}
+
 // Auto-avançar preferência
 function applyAutoAdvance(val){ state.autoAdvance = !!val; localStorage.setItem('app2:autoAdvance', state.autoAdvance ? '1' : '0'); if (els.sessionAutoAdvance) els.sessionAutoAdvance.checked = state.autoAdvance; }
 if (els.sessionAutoAdvance) els.sessionAutoAdvance.addEventListener('change', (e)=> applyAutoAdvance(e.target.checked));
@@ -489,6 +504,13 @@ function renderTreino(){
     const header = document.createElement('div'); header.className = 'ex-header';
     const titleWrap = document.createElement('div'); titleWrap.className = 'ex-title';
     const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`;
+    // Badges: PR + reps+
+    if (hasPR(id, week)){
+      const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'PR'; b.style.marginLeft = '8px'; h3.appendChild(b);
+      if (isRepsPlusPR(id, week)){
+        const rp = document.createElement('span'); rp.className = 'badge-secondary'; rp.textContent = 'reps+'; rp.style.marginLeft = '6px'; h3.appendChild(rp);
+      }
+    }
     titleWrap.appendChild(h3); header.appendChild(titleWrap); card.appendChild(header);
 
     const meta = document.createElement('div'); meta.className = 'meta';
@@ -545,6 +567,16 @@ function bestOverallLoad(exId){ let best = null; let unit = null; let week = 0; 
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
 function markPRIfAny(exId, week, cargaStr, repsStr){ const now = parseLoad(cargaStr); const nowReps = parseReps(repsStr); if(!now) return false; const best = bestPreviousLoadAndReps(exId, week); const key = keyFor(exId, week, 'pr'); if(best.load == null || now.value > best.load){ localStorage.setItem(key, '1'); return true; } if (best.load != null && now.value === best.load && nowReps != null && best.reps != null && nowReps > best.reps){ localStorage.setItem(key, '1'); return true; } localStorage.removeItem(key); return false; }
 function hasPR(exId, week){ return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
+// Detecta PR por repetições na mesma carga
+function isRepsPlusPR(exId, week){
+  if (!hasPR(exId, week)) return false;
+  const entry = getEntry(exId, week);
+  const nowL = parseLoad(entry.carga);
+  const nowR = parseReps(entry.reps);
+  const best = bestPreviousLoadAndReps(exId, week);
+  if (!nowL || best.load == null) return false;
+  return (nowL.value === best.load) && (nowR != null) && (best.reps != null) && (nowR > best.reps);
+}
 
 function renderResumo(){
   const week = Number(state.week);
@@ -662,6 +694,9 @@ function renderSessao(){
   const h3 = document.createElement('h3'); h3.textContent = `${sanitize(ex.Exercicio)} (${sanitize(ex.Grupo)})`;
   if (hasPR(id, week)){
     const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'PR'; b.style.marginLeft = '8px'; h3.appendChild(b);
+    if (isRepsPlusPR(id, week)){
+      const rp = document.createElement('span'); rp.className = 'badge-secondary'; rp.textContent = 'reps+'; rp.style.marginLeft = '6px'; h3.appendChild(rp);
+    }
   }
   card.appendChild(h3);
   // Imagem removida para evitar distração e bugs; podemos reativar depois
@@ -698,7 +733,7 @@ function renderSessao(){
       const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `Aquecimento: ${Math.min(done, warmupTarget)}/${warmupTarget}`; rowHint.appendChild(hint);
       const rowActions = document.createElement('div'); rowActions.className = 'stage-actions';
       const btn = document.createElement('button'); btn.className = 'btn btn-success'; btn.innerHTML = '<span class="btn-title">Concluir</span><br><span class="btn-sub">aquecimento</span>'; btn.disabled = done >= warmupTarget;
-      btn.addEventListener('click', ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const s = 60; setSeconds(s); start(); els.timerPanel.hidden = false; hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; reset.disabled = n <= 0; });
+      btn.addEventListener('click', async ()=>{ const n = Math.min(getWarmupCount(week, state.day, group) + 1, warmupTarget); setWarmupCount(week, state.day, group, n); const s = 60; setSeconds(s); start(); els.timerPanel.hidden = false; await openTimerFullscreen(); hint.textContent = `Aquecimento: ${n}/${warmupTarget}`; if (n >= warmupTarget) btn.disabled = true; reset.disabled = n <= 0; });
       rowActions.appendChild(btn);
       const reset = document.createElement('button'); reset.className = 'btn btn-danger'; reset.innerHTML = '<span class="btn-title">Reset</span><br><span class="btn-sub">aquecimento</span>'; reset.disabled = done <= 0;
       reset.addEventListener('click', ()=>{ setWarmupCount(week, state.day, group, 0); hint.textContent = `Aquecimento: 0/${warmupTarget}`; btn.disabled = false; reset.disabled = true; });
@@ -714,7 +749,7 @@ function renderSessao(){
       hintP.textContent = `Preparatórias: ${Math.min(doneP, prepMax)}/${targetLabel}`; rowP.appendChild(hintP);
       const rowPActions = document.createElement('div'); rowPActions.className = 'stage-actions';
       const btnDone = document.createElement('button'); btnDone.className = 'btn btn-success'; btnDone.innerHTML = '<span class="btn-title">Concluir</span><br><span class="btn-sub">preparatória</span>'; btnDone.disabled = doneP >= prepMax;
-      btnDone.addEventListener('click', ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const s = 90; setSeconds(s); start(); els.timerPanel.hidden = false; hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; btnReset.disabled = n <= 0; });
+      btnDone.addEventListener('click', async ()=>{ const n = Math.min(getPrepCount(week, ex._id) + 1, prepMax); setPrepCount(week, ex._id, n); const s = 90; setSeconds(s); start(); els.timerPanel.hidden = false; await openTimerFullscreen(); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; if (n >= prepMax) btnDone.disabled = true; btnReset.disabled = n <= 0; });
       rowPActions.appendChild(btnDone);
       const btnReset = document.createElement('button'); btnReset.className = 'btn btn-danger'; btnReset.innerHTML = '<span class="btn-title">Reset</span><br><span class="btn-sub">preparatória</span>'; btnReset.disabled = doneP <= 0;
       btnReset.addEventListener('click', ()=>{ setPrepCount(week, ex._id, 0); hintP.textContent = `Preparatórias: 0/${targetLabel}`; btnDone.disabled = false; btnReset.disabled = true; }); rowPActions.appendChild(btnReset);
@@ -722,7 +757,7 @@ function renderSessao(){
       stage.appendChild(rowPActions);
       if (prepMin > 0 && doneP < prepMin) {
         const btnSkip = document.createElement('button'); btnSkip.className = 'btn btn-gold'; btnSkip.textContent = 'Ir para válida';
-        btnSkip.addEventListener('click', ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; btnReset.disabled = n <= 0; const s = 120; setSeconds(s); start(); els.timerPanel.hidden = false; });
+        btnSkip.addEventListener('click', async ()=>{ const n = Math.max(prepMin, getPrepCount(week, ex._id)); setPrepCount(week, ex._id, n); hintP.textContent = `Preparatórias: ${n}/${targetLabel}`; btnDone.disabled = n >= prepMax; btnSkip.disabled = true; btnReset.disabled = n <= 0; const s = 120; setSeconds(s); start(); els.timerPanel.hidden = false; await openTimerFullscreen(); });
         const rowSkip = document.createElement('div'); rowSkip.className = 'stage-row';
         rowSkip.appendChild(btnSkip);
         stage.appendChild(rowSkip);
