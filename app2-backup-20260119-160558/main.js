@@ -541,6 +541,7 @@ function renderTecnicas(){
 function parseLoad(s){ if(!s) return null; const m = String(s).match(/([0-9]+(?:\.[0-9]+)?)(\s*(kg|lb))?/i); if(!m) return null; return { value: parseFloat(m[1]), unit: (m[3]||'').toLowerCase() }; }
 function parseReps(s){ if(s==null) return null; const nums = String(s).match(/\d+(?:\.\d+)?/g); if(!nums || !nums.length) return null; return Math.max(...nums.map(Number)); }
 function bestPreviousLoadAndReps(exId, uptoWeek){ let bestLoad = null, bestReps = null, bestUnit = null; for(let w=1; w<uptoWeek; w++){ const e = getEntry(exId, w); const p = parseLoad(e.carga); if(!p) continue; const r = parseReps(e.reps); if(bestLoad == null || p.value > bestLoad){ bestLoad = p.value; bestUnit = p.unit; bestReps = (r==null? null : r); } else if (p.value === bestLoad){ if(r!=null && (bestReps==null || r > bestReps)) bestReps = r; } } return { load: bestLoad, unit: bestUnit, reps: bestReps }; }
+function bestOverallLoad(exId){ let best = null; let unit = null; let week = 0; for(let w=1; w<=4; w++){ const p = parseLoad(getEntry(exId, w).carga); if(p && (!best || p.value > best)){ best = p.value; unit = p.unit; week = w; } } return best==null ? null : { value: best, unit, week }; }
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
 function markPRIfAny(exId, week, cargaStr, repsStr){ const now = parseLoad(cargaStr); const nowReps = parseReps(repsStr); if(!now) return false; const best = bestPreviousLoadAndReps(exId, week); const key = keyFor(exId, week, 'pr'); if(best.load == null || now.value > best.load){ localStorage.setItem(key, '1'); return true; } if (best.load != null && now.value === best.load && nowReps != null && best.reps != null && nowReps > best.reps){ localStorage.setItem(key, '1'); return true; } localStorage.removeItem(key); return false; }
 function hasPR(exId, week){ return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
@@ -672,6 +673,18 @@ function renderSessao(){
     <span>Séries: ${sanitize(ex.SeriesBase)}</span>
     <span>Pausa: ${sanitize(ex.Pausa)}</span>
   `;
+    try {
+      const best = bestOverallLoad(id);
+      const prSpan = document.createElement('span'); prSpan.textContent = `PR atual: ${best ? (best.value + (best.unit? ' '+best.unit : '')) : '-'}`;
+      const repsSpan = document.createElement('span'); repsSpan.textContent = `Reps S${week}: ${entry.reps || '-'}`;
+      meta.appendChild(prSpan); meta.appendChild(repsSpan);
+    } catch {}
+  try {
+    const best = bestOverallLoad(id);
+    const prSpan = document.createElement('span'); prSpan.textContent = `PR atual: ${best ? (best.value + (best.unit? ' '+best.unit : '')) : '-'}`;
+    const repsSpan = document.createElement('span'); repsSpan.textContent = `Reps S${week}: ${entry.reps || '-'}`;
+    meta.appendChild(prSpan); meta.appendChild(repsSpan);
+  } catch {}
   card.appendChild(meta);
 
   // Stage controls
