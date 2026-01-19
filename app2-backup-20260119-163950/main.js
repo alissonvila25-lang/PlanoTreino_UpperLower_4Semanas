@@ -521,7 +521,7 @@ function renderTreino(){
     `;
     // Meta extra: PR atual + Reps da semana
     try {
-      const best = bestOverallLoad(id);
+      const best = bestOverallLoadByExercise(sanitize(ex.Exercicio));
       const prSpan = document.createElement('span'); prSpan.textContent = `PR atual: ${best ? (best.value + (best.unit? ' '+best.unit : '')) : '-'}`;
       const repsSpan = document.createElement('span'); repsSpan.textContent = `Reps S${week}: ${entry.reps || '-'}`;
       meta.appendChild(prSpan); meta.appendChild(repsSpan);
@@ -572,7 +572,12 @@ function parseReps(s){ if(s==null) return null; const nums = String(s).match(/\d
 function bestPreviousLoadAndReps(exId, uptoWeek){ let bestLoad = null, bestReps = null, bestUnit = null; for(let w=1; w<uptoWeek; w++){ const e = getEntry(exId, w); const p = parseLoad(e.carga); if(!p) continue; const r = parseReps(e.reps); if(bestLoad == null || p.value > bestLoad){ bestLoad = p.value; bestUnit = p.unit; bestReps = (r==null? null : r); } else if (p.value === bestLoad){ if(r!=null && (bestReps==null || r > bestReps)) bestReps = r; } } return { load: bestLoad, unit: bestUnit, reps: bestReps }; }
 function bestOverallLoad(exId){ let best = null; let unit = null; let week = 0; for(let w=1; w<=4; w++){ const p = parseLoad(getEntry(exId, w).carga); if(p && (!best || p.value > best)){ best = p.value; unit = p.unit; week = w; } } return best==null ? null : { value: best, unit, week }; }
 function keyFor(id, week, field){ return `app2:${id}:S${week}:${field}`; }
-function markPRIfAny(exId, week, cargaStr, repsStr){ const now = parseLoad(cargaStr); const nowReps = parseReps(repsStr); if(!now) return false; const best = bestPreviousLoadAndReps(exId, week); const key = keyFor(exId, week, 'pr'); if(best.load == null || now.value > best.load){ localStorage.setItem(key, '1'); return true; } if (best.load != null && now.value === best.load && nowReps != null && best.reps != null && nowReps > best.reps){ localStorage.setItem(key, '1'); return true; } localStorage.removeItem(key); return false; }
+// Exercício-only identity helpers
+function exerciseNameFromId(id){ const parts = String(id||'').split('|'); return parts.length > 1 ? sanitize(parts[1]) : sanitize(id); }
+function getIdsForExercise(exName){ const name = sanitize(exName); return state.plan.filter(x => sanitize(x.Exercicio) === name).map(x => x._id); }
+function bestPreviousLoadAndRepsByExercise(exName, uptoWeek){ let bestLoad = null, bestReps = null, bestUnit = null; const ids = getIdsForExercise(exName); for(let w=1; w<uptoWeek; w++){ for(const id of ids){ const e = getEntry(id, w); const p = parseLoad(e.carga); if(!p) continue; const r = parseReps(e.reps); if(bestLoad == null || p.value > bestLoad){ bestLoad = p.value; bestUnit = p.unit; bestReps = (r==null? null : r); } else if (p.value === bestLoad){ if(r!=null && (bestReps==null || r > bestReps)) bestReps = r; } } } return { load: bestLoad, unit: bestUnit, reps: bestReps }; }
+function bestOverallLoadByExercise(exName){ let best = null; let unit = null; let week = 0; const ids = getIdsForExercise(exName); for(let w=1; w<=4; w++){ for(const id of ids){ const p = parseLoad(getEntry(id, w).carga); if(p && (!best || p.value > best)){ best = p.value; unit = p.unit; week = w; } } } return best==null ? null : { value: best, unit, week }; }
+function markPRIfAny(exId, week, cargaStr, repsStr){ const now = parseLoad(cargaStr); const nowReps = parseReps(repsStr); if(!now) return false; const exName = exerciseNameFromId(exId); const best = bestPreviousLoadAndRepsByExercise(exName, week); const key = keyFor(exId, week, 'pr'); if(best.load == null || now.value > best.load){ localStorage.setItem(key, '1'); return true; } if (best.load != null && now.value === best.load && nowReps != null && best.reps != null && nowReps > best.reps){ localStorage.setItem(key, '1'); return true; } localStorage.removeItem(key); return false; }
 function hasPR(exId, week){ return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
 // Detecta PR por repetições na mesma carga
 function isRepsPlusPR(exId, week){
@@ -580,7 +585,8 @@ function isRepsPlusPR(exId, week){
   const entry = getEntry(exId, week);
   const nowL = parseLoad(entry.carga);
   const nowR = parseReps(entry.reps);
-  const best = bestPreviousLoadAndReps(exId, week);
+  const exName = exerciseNameFromId(exId);
+  const best = bestPreviousLoadAndRepsByExercise(exName, week);
   if (!nowL || best.load == null) return false;
   return (nowL.value === best.load) && (nowR != null) && (best.reps != null) && (nowR > best.reps);
 }
@@ -622,7 +628,7 @@ function renderResumo(){
       let prRepsBadge = '';
       if (pr) {
         const nowL = parseLoad(e.carga); const nowR = parseReps(e.reps);
-        const best = bestPreviousLoadAndReps(ex._id, week);
+        const best = bestPreviousLoadAndRepsByExercise(sanitize(ex.Exercicio), week);
         if (nowL && best && nowL.value === best.load && nowR != null && best.reps != null && nowR > best.reps) {
           prRepsBadge = '<span class=\"badge-secondary\" style=\"margin-left:6px;\">reps+</span>';
         }
@@ -716,7 +722,7 @@ function renderSessao(){
     <span>Pausa: ${sanitize(ex.Pausa)}</span>
   `;
   try {
-    const best = bestOverallLoad(id);
+    const best = bestOverallLoadByExercise(sanitize(ex.Exercicio));
     const prSpan = document.createElement('span'); prSpan.textContent = `PR atual: ${best ? (best.value + (best.unit? ' '+best.unit : '')) : '-'}`;
     const repsSpan = document.createElement('span'); repsSpan.textContent = `Reps S${week}: ${entry.reps || '-'}`;
     meta.appendChild(prSpan); meta.appendChild(repsSpan);
