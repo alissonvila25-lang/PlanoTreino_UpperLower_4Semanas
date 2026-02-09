@@ -402,6 +402,16 @@ function renderTreino() {
 			<span>Series: ${sanitize(ex.SeriesBase)}</span>
 			<span>Pausa: ${sanitize(ex.Pausa)}</span>
 		`;
+		// PR atual e reps realizadas (semana atual)
+		try {
+			const best = bestLoad(id, week);
+			const prSpan = document.createElement('span');
+			prSpan.textContent = `PR atual: ${best ? (best.value + (best.unit ? ' ' + best.unit : '')) : '-'}`;
+			meta.appendChild(prSpan);
+			const repsSpan = document.createElement('span');
+			repsSpan.textContent = `Reps S${week}: ${entry.reps || '-'}`;
+			meta.appendChild(repsSpan);
+		} catch {}
 		card.appendChild(meta);
 
 		// Stage controls também no Treino
@@ -709,6 +719,17 @@ function markPRIfAny(exId, week, cargaStr) {
 
 function hasPR(exId, week) { return localStorage.getItem(keyFor(exId, week, 'pr')) === '1'; }
 
+// Melhor PR atual (até a semana selecionada)
+function bestLoad(exId, uptoWeek) {
+	let best = null;
+	let bestWeek = 0;
+	for (let w = 1; w <= uptoWeek; w++) {
+		const p = parseLoad(getEntry(exId, w).carga);
+		if (p && (!best || p.value > best.value)) { best = p; bestWeek = w; }
+	}
+	return best ? { value: best.value, unit: best.unit, week: bestWeek } : null;
+}
+
 // Série helpers: aquecimento e preparatórias
 function parseSeriesMeta(seriesBase){
 	const txt = sanitize(seriesBase||'');
@@ -789,6 +810,16 @@ function renderSessionCard(ex) {
 		<span>Séries: ${sanitize(ex.SeriesBase)}</span>
 		<span>Pausa: ${sanitize(ex.Pausa)}</span>
 	`;
+	// PR atual e reps realizadas
+	try {
+		const best = bestLoad(ex._id, week);
+		const prSpan = document.createElement('span');
+		prSpan.textContent = `PR atual: ${best ? (best.value + (best.unit ? ' ' + best.unit : '')) : '-'}`;
+		meta.appendChild(prSpan);
+		const repsSpan = document.createElement('span');
+		repsSpan.textContent = `Reps S${week}: ${entry.reps || '-'}`;
+		meta.appendChild(repsSpan);
+	} catch {}
 	titleWrap.appendChild(meta);
 	header.appendChild(titleWrap);
 	wrap.appendChild(header);

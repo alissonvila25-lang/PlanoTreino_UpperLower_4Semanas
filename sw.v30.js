@@ -1,5 +1,6 @@
 const APP_VERSION = 'v30';
 const CACHE_NAME = `plano-ul-4s-${APP_VERSION}`;
+const SW_VERSION = 'root-sw-v30';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -30,6 +31,14 @@ self.addEventListener('activate', (event) => {
     ))
   );
   self.clients.claim();
+  // Notifica páginas controladas com a versão do SW
+  try {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => {
+        try { client.postMessage({ type: 'SW_ACTIVATED', version: SW_VERSION }); } catch {}
+      });
+    });
+  } catch {}
 });
 
 self.addEventListener('message', (event) => {

@@ -1,4 +1,5 @@
 const CACHE_NAME = 'plano-ul-4s-v30';
+const SW_VERSION = 'app-sw-v30';
 const ASSETS = [
   './index.html',
   './style.css',
@@ -17,6 +18,14 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
   );
   self.clients.claim();
+  // Notifica páginas controladas para atualizar rótulo de versão visível
+  try {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => {
+        try { client.postMessage({ type: 'SW_ACTIVATED', version: SW_VERSION }); } catch {}
+      });
+    });
+  } catch {}
 });
 
 // Helper para obter URL absoluta de index.html no escopo do SW

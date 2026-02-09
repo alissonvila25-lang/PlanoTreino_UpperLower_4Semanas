@@ -61,10 +61,10 @@ Como usar (Windows):
 pip install requests
 
 # Rodar o coletor (na raiz do projeto)
-python app/scripts/fetch_commons_images.py
+python scripts/fetch_commons_images.py
 
 # Fallback/alternativa via Openverse
-python app/scripts/fetch_openverse_images.py
+python scripts/fetch_openverse_images.py
 ```
 
 O script:
@@ -76,3 +76,49 @@ Observações:
 - As imagens baixadas são de licença livre (Commons). Evitamos conteúdo com direitos autorais restritos (Google Images tradicional, etc.).
 - Após baixar novas imagens, o Service Worker fará cache quando forem carregadas; não é necessário precache manual.
  - Os créditos e licenças ficam registrados em `app/image_credits.json`.
+
+## Checklist de bump de versão
+Para garantir que o app atualize corretamente (cache bust e SW), siga estes passos ao mudar de versão:
+
+## Publicação em GitHub Pages (app2)
+Mantemos a publicação em `app2/` e sempre um backup da última versão.
+
+### Script de publicação com backup
+Na raiz do projeto, execute:
+
+```powershell
+# Publica de app/ para app2/ e cria backup app2-backup-YYYYMMDD-HHmmss/
+.\scripts\publish_app2.ps1
+
+# Opcional: mensagem de commit customizada
+.\scripts\publish_app2.ps1 -CommitMessage "deploy: app2 v30"
+
+# Opcional: pular atualização automática de app2-stable/
+.\scripts\publish_app2.ps1 -SkipStable
+```
+
+O script:
+- Cria um backup da pasta `app2/` atual: `app2-backup-YYYYMMDD-HHmmss/`.
+- Espelha o conteúdo de `app/` para `app2/` (remove o antigo e copia o novo).
+- Atualiza automaticamente `app2-stable/` a partir de `app2/`, com backup em `app2-stable-backup-YYYYMMDD-HHmmss/` (desative com `-SkipStable`).
+- Roda `git add`, `git commit` e `git push` automaticamente (desative com `-NoGit`).
+
+### Publicação manual (sem script)
+
+```powershell
+# 1) Backup da versão atual
+Copy-Item app2 app2-backup-$(Get-Date -Format "yyyyMMdd-HHmmss") -Recurse -Force
+
+# 2) Limpar destino e copiar a partir de app/
+Remove-Item app2 -Recurse -Force
+mkdir app2 | Out-Null
+Copy-Item app/* app2 -Recurse -Force
+
+# 3) Commit e push
+git add app2 app2-backup-*
+git commit -m "deploy: app2 v30"
+git push
+```
+
+Após o push no branch configurado do Pages, o site estará disponível em:
+https://alissonvila25-lang.github.io/PlanoTreino_UpperLower_4Semanas/app2/
